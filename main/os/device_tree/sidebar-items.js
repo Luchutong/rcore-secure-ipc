@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["clock_freq","init"],"static":["CLOCK_FREQ"]};

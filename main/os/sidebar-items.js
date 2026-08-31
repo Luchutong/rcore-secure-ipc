@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["clear_bss","rust_main"],"macro":[["linker_symbol_addr",1],["print",1],["println",1]],"mod":["board","config","console","device_tree","drivers","fs","lang_items","logging","mm","sbi","sync","syscall","task","timer","trap"]};
