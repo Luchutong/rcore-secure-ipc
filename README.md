@@ -16,7 +16,9 @@
 
 项目处于基线阶段。仓库包含可供后续改造的 rCore 第七章教学内核源码，以及项目路线图和 AI 使用记录。
 
-- [开发路线图](docs/ROADMAP.md)
+- [四人协作开发计划](docs/ROADMAP.md)
+- [IPC Security API v1](docs/IPC_SECURITY_API.md)
+- [贡献与合并规范](CONTRIBUTING.md)
 - [AI 工具使用记录](docs/AI_USAGE.md)
 
 ## 上游成果与致谢
