@@ -18,6 +18,7 @@
 
 - [四人协作开发计划](docs/ROADMAP.md)
 - [IPC Security API v1](docs/IPC_SECURITY_API.md)
+- [模块独立性审计](docs/MODULE_INDEPENDENCE.md)
 - [贡献与合并规范](CONTRIBUTING.md)
 - [AI 工具使用记录](docs/AI_USAGE.md)
 

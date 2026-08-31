@@ -3,6 +3,7 @@ mod frame_allocator;
 mod heap_allocator;
 mod memory_set;
 mod page_table;
+mod user_access;
 
 use address::VPNRange;
 pub use address::{PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
@@ -14,6 +15,7 @@ pub use page_table::{
     PageTable, PageTableEntry, UserBuffer, translated_byte_buffer, translated_ref,
     translated_refmut, translated_str,
 };
+pub use user_access::{copy_from_user, copy_to_user};
 
 pub fn init() {
     heap_allocator::init_heap();
