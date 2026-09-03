@@ -1,5 +1,8 @@
 use crate::fs::{OpenFlags, open_file};
 use crate::mm::{translated_ref, translated_refmut, translated_str};
+use crate::security::{
+    self, CapabilitySet, IpcError, IpcObject, IpcOperation, IpcRequest, IpcSubject, Uid,
+};
 use crate::task::{
     MAX_SIG, SignalAction, SignalFlags, add_task, current_task, current_user_token,
     exit_current_and_run_next, pid2task, suspend_current_and_run_next,
@@ -8,6 +11,9 @@ use crate::timer::get_time_ms;
 use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+
+/// Errno returned to user space.
+const EPERM: isize = -1; // Operation not permitted
 
 pub fn sys_exit(exit_code: i32) -> ! {
     exit_current_and_run_next(exit_code);
@@ -105,21 +111,57 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 }
 
 pub fn sys_kill(pid: usize, signum: i32) -> isize {
-    if let Some(task) = pid2task(pid) {
-        if let Some(flag) = SignalFlags::from_bits(1 << signum) {
-            // insert the signal if legal
-            let mut task_ref = task.inner_exclusive_access();
-            if task_ref.signals.contains(flag) {
-                return -1;
-            }
-            task_ref.signals.insert(flag);
-            0
-        } else {
-            -1
-        }
-    } else {
-        -1
+    // Validate signal number first.
+    let flag = match SignalFlags::from_bits(1 << signum) {
+        Some(f) => f,
+        None => return -1,
+    };
+
+    // Look up the target process.
+    let target = match pid2task(pid) {
+        Some(t) => t,
+        None => return -1,
+    };
+
+    // Build the IPC request from caller and target credentials.
+    let caller = current_task().unwrap();
+    let caller_pid = caller.getpid();
+    let (caller_uid, caller_caps) = {
+        let inner = caller.inner_exclusive_access();
+        let cred = &inner.security.credentials;
+        (cred.uid, cred.capabilities)
+    };
+    let target_uid = {
+        let inner = target.inner_exclusive_access();
+        inner.security.credentials.uid
+    };
+
+    let request = IpcRequest {
+        subject: IpcSubject {
+            pid: caller_pid,
+            uid: caller_uid,
+            capabilities: caller_caps,
+        },
+        object: IpcObject {
+            id: pid as u64,
+            owner_uid: target_uid,
+        },
+        operation: IpcOperation::SignalSend,
+        amount: 1,
+    };
+
+    // Run the authorization check.
+    if let Err(IpcError::PermissionDenied) = security::policy::authorize(&request) {
+        return EPERM;
     }
+
+    // Authorized — insert the signal.
+    let mut task_ref = target.inner_exclusive_access();
+    if task_ref.signals.contains(flag) {
+        return -1;
+    }
+    task_ref.signals.insert(flag);
+    0
 }
 
 pub fn sys_sigprocmask(mask: u32) -> isize {
@@ -187,4 +229,40 @@ pub fn sys_sigaction(
     } else {
         -1
     }
+}
+
+// ---------------------------------------------------------------------------
+//  Credential syscalls
+// ---------------------------------------------------------------------------
+
+/// Return the UID of the calling process.
+pub fn sys_getuid() -> isize {
+    let task = current_task().unwrap();
+    let inner = task.inner_exclusive_access();
+    inner.security.credentials.uid as isize
+}
+
+/// Change the UID of the calling process.
+///
+/// Only root (UID 0) may call this.  After the call the process loses root
+/// privileges (its capabilities are cleared) unless `uid == 0`.
+/// Returns 0 on success, -1 on failure.
+pub fn sys_setuid(uid: usize) -> isize {
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    let cred = &mut inner.security.credentials;
+
+    // Only root can change UID.
+    if !cred.is_root() {
+        return EPERM;
+    }
+
+    let new_uid = uid as Uid;
+    cred.uid = new_uid;
+    // Dropping root: lose all capabilities.
+    // Staying root: keep all capabilities.
+    if new_uid != 0 {
+        cred.capabilities = CapabilitySet::empty();
+    }
+    0
 }

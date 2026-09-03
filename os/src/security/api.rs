@@ -29,6 +29,17 @@ impl CapabilitySet {
     pub const fn contains(self, required: Self) -> bool {
         self.0 & required.0 == required.0
     }
+
+    /// All capabilities (used by the root process).
+    pub const fn all() -> Self {
+        Self(Self::KILL.0 | Self::IPC_ADMIN.0 | Self::AUDIT_READ.0)
+    }
+
+    /// Insert another capability set in-place.
+    pub const fn insert(mut self, other: Self) -> Self {
+        self.0 |= other.0;
+        self
+    }
 }
 
 /// IPC operations that can be authorized and audited.

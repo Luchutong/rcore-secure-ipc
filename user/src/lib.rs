@@ -249,3 +249,18 @@ pub fn sigprocmask(mask: u32) -> isize {
 pub fn sigreturn() -> isize {
     sys_sigreturn()
 }
+
+// ---------------------------------------------------------------------------
+//  Credential API
+// ---------------------------------------------------------------------------
+
+/// Return the UID of the calling process.
+pub fn getuid() -> isize {
+    sys_getuid()
+}
+
+/// Change the UID of the calling process (root only).
+/// Returns 0 on success, -1 on failure.
+pub fn setuid(uid: usize) -> isize {
+    sys_setuid(uid)
+}
