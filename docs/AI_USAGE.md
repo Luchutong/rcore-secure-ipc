@@ -1,3 +1,14 @@
+---
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: 'e7216a48-ea08-4be2-bc63-3601c2056b91'
+  PropagateID: 'e7216a48-ea08-4be2-bc63-3601c2056b91'
+  ReservedCode1: '45b64d68-74fa-4a20-ad6e-6976a003bc93'
+  ReservedCode2: '45b64d68-74fa-4a20-ad6e-6976a003bc93'
+---
+
 # AI 工具使用记录
 
 本项目按照课程要求记录 AI 工具的使用情况，后续应持续补充具体日期、任务、采用内容和人工验证结果。
@@ -15,6 +26,7 @@
 | 2026-08-31 | 项目组 | OpenAI Codex | 选题与仓库初始化 | IPC 安全缺口分析、开发路线图和初始文档 | 部分采用 | 待项目组复核 |
 | 2026-08-31 | 项目组 | OpenAI Codex | CI 修复与四人协作设计 | 定位 `gh-pages` 写权限故障，拆分只读验证与主分支发布任务，草拟 API v1、职责分工和合并流程 | 已采用 | YAML 与本地差异检查通过，等待 GitHub Actions 验证 |
 | 2026-08-31 | 项目组 | OpenAI Codex | 模块独立性审计 | 分析任务、系统调用、管道和用户内存依赖，建立安全模块骨架、进程安全状态、文件所有权和分支基线 | 已采用 | 静态冲突面检查完成，等待 integration CI 验证 |
+| 2026-09-03 | 于泽通 | TeleAgent (星辰超级智能体) | 角色A：进程凭据与授权策略实现 | 实现 `Credentials` 结构与 UID 分配器、`authorize_signal` 五级权限检查、重写 `sys_kill` 走 IPC 授权链路、新增 `sys_getuid`/`sys_setuid` 系统调用、编写用户态测试程序 `cred_test.rs` | 已采用 | 内核+用户程序编译通过，QEMU 运行 5/5 测试 PASS，exec 不改 UID 行为确认 |
 
 ## 使用原则
 
@@ -22,3 +34,5 @@
 - 在提交信息、设计文档和答辩材料中标明 AI 参与部分。
 - 保留关键交互记录，说明人工修改和验证过程。
 - 不向 AI 工具提交密钥、口令或其他敏感信息。
+
+> AI生成
