@@ -135,17 +135,17 @@ pub fn copy_bytes_from_user(
 
 ## 6. 错误码映射
 
-| `IpcError` | 用户态错误 | 场景 |
-| --- | ---: | --- |
-| `PermissionDenied` | `EPERM` | 无权发送信号或管理 IPC |
-| `InvalidAddress` | `EFAULT` | 用户地址未映射或权限错误 |
-| `InvalidArgument` | `EINVAL` | 信号编号、标志或长度无效 |
-| `ProcessNotFound` | `ESRCH` | 目标 PID 不存在 |
-| `TooManyFiles` | `EMFILE` | 进程 FD 达到上限 |
-| `ResourceExhausted` | `ENOSPC` | 系统或进程 IPC 配额耗尽 |
-| `TryAgain` | `EAGAIN` | 非阻塞操作暂时无法完成 |
+| `IpcError` | 用户态错误 | 数值 | 场景 |
+| --- | --- | ---: | --- |
+| `PermissionDenied` | `EPERM` | 1 | 无权发送信号或管理 IPC |
+| `InvalidAddress` | `EFAULT` | 14 | 用户地址未映射或权限错误 |
+| `InvalidArgument` | `EINVAL` | 22 | 信号编号、标志或长度无效 |
+| `ProcessNotFound` | `ESRCH` | 3 | 目标 PID 不存在 |
+| `TooManyFiles` | `EMFILE` | 24 | 进程 FD 达到上限 |
+| `ResourceExhausted` | `ENOSPC` | 28 | 系统或进程 IPC 配额耗尽 |
+| `TryAgain` | `EAGAIN` | 11 | 非阻塞操作暂时无法完成 |
 
-用户态 ABI 使用的具体负数值在实现前统一定义，之后不得由各功能分支自行选择。
+新安全系统调用失败时返回对应的负数值。rCore 已有系统调用不因本表被追溯修改。审计记录保存正的 errno；具体规则见 [IPC 安全审计 ABI v1](AUDIT_ABI_V1.md)。
 
 ## 7. 锁与生命周期约束
 
@@ -175,3 +175,7 @@ pub fn copy_bytes_from_user(
 | 604 | `pipe2` | C |
 
 功能分支实现对应内核函数，但不单独编辑系统调用总路由；D 在 `integration` 阶段按本表统一登记内核分发与用户态封装。未经过 API change PR 不得占用其他编号。
+
+## 10. 审计 ABI v1
+
+系统调用 602/603 的结构布局、操作编号、游标读取、权限、溢出处理和错误返回已经统一定义在 [IPC 安全审计 ABI v1](AUDIT_ABI_V1.md)。内核、用户库、测试和审计工具必须以该文档为共同契约，不得直接将 Rust 内部枚举或内核指针复制到用户态。
