@@ -203,7 +203,7 @@ overwritten_events += 1
 | `TooManyFiles` | 24 (`EMFILE`) |
 | `ResourceExhausted` | 28 (`ENOSPC`) |
 
-成功事件保存 `errno = 0` 和实际 `result_value`。失败事件保存正 errno，并强制 `result_value = 0`。系统调用返回错误时再对 errno 取负数。
+成功事件保存 `errno = 0`。管道读写的 `result_value` 保存实际字节数，包括合法的 0 字节结果；按 ABI v1，信号发送和管道创建成功时固定保存 1，表示完成一次操作。失败事件保存正 errno，并强制 `result_value = 0`。系统调用返回错误时再对 errno 取负数，不改变原有 rCore 系统调用的历史返回约定。
 
 ### 6.3 字段来源
 
@@ -212,9 +212,11 @@ overwritten_events += 1
 - `object_id`：来自稳定 `ResourceId`，没有对象时写 `AUDIT_OBJECT_NONE`；
 - `object_owner_uid`：已知时来自 `IpcRequest.object.owner_uid`，未知时写 `AUDIT_UID_UNKNOWN`；
 - `requested_amount`：来自 `IpcRequest.amount`；
-- `result_value`：成功时来自 IPC 操作的实际返回数量，失败时为 0。
+- `result_value`：管道读写成功时来自实际字节数，信号发送/管道创建成功时为 1，失败时为 0。
 
 禁止把 `Arc` 地址、裸指针、物理地址或用户缓冲区内容写入事件。
+
+实现中 `AuditEvent::from_request` 接收显式时间戳，只转换普通值；`record` 在借用环形缓冲区前读取时钟并调用转换函数，再交给 `push` 分配序号。事件转换保持请求中的资源 ID 和所有者 UID，调用方必须提供稳定编号；未知 UID 使用 `AUDIT_UID_UNKNOWN`，不能将合法的 UID 0 当作未知值。信号发送/管道创建的调用方应设置请求数量为 1。
 
 ## 7. 读取快照与游标语义
 
@@ -224,12 +226,13 @@ overwritten_events += 1
 
 ```rust
 struct AuditBatch {
-    records: [AuditRecordV1; AUDIT_READ_MAX_RECORDS],
+    events: [AuditEvent; AUDIT_READ_MAX_RECORDS],
     len: usize,
+    gap_before: bool,
 }
 ```
 
-最大占用约 2.5 KiB，低于当前 8 KiB 内核栈大小。不得在一次读取中按用户提供的 `capacity` 进行无界分配。
+快照保存内部事件，函数返回后即释放审计缓冲区借用。系统调用随后通过 `AuditBatch::record_at` 逐条取得 `AuditRecordV1`，该方法只返回有效记录，并且只给批次第一条记录设置覆盖标志。这样不需要在当前 8 KiB 内核栈上同时放置两整批数组；实现时仍应考虑整个调用链的栈占用。不得在一次读取中按用户提供的 `capacity` 进行无界分配。
 
 实际批次上限为：
 
@@ -410,14 +413,18 @@ record_control_failure(operation, subject, requested_amount, error)
 
 ## 13. 用户内存复制
 
+602/603 主体已实现于 `os/src/syscall/security.rs`，通过 `mod security` 纳入内核编译。
+本阶段没有登记全局系统调用分发；接线仍按第 16 节作为后续独立步骤。
+逐函数原理与当前验证边界见 [602/603 系统调用实现说明](AUDIT_SYSCALLS.md)。
+
 `sys_audit_read` 的顺序为：
 
 1. 读取并释放调用者凭据；
 2. 检查权限；
 3. `capacity == 0` 时返回 0，且完全不访问 `records`；
-4. 检查记录数组地址计算是否溢出；
-5. 在审计锁内生成最多 32 条记录的快照；
-6. 释放审计锁；
+4. 在审计锁内生成最多 32 条记录的值快照，随后释放审计锁；
+5. 没有记录时返回 0，不访问输出地址；
+6. 按实际记录数量检查空输出地址以及乘法、加法溢出；
 7. 使用 `mm::copy_to_user` 逐条复制快照；
 8. 全部成功时返回复制数量。
 
@@ -433,7 +440,7 @@ record_control_failure(operation, subject, requested_amount, error)
 
 `sys_ipc_stat` 同样在释放审计锁后复制统计结构。v1 要求 `flags == 0` 且 `out_size >= 80`，否则返回并记录 `-EINVAL`。
 
-用户地址安全性的最终保证由开发者 B 的 `copy_to_user` 实现提供。B 合入前只验证合法地址路径，不执行空指针、跨页、不可写页或溢出地址攻击测试。
+用户地址安全性的最终保证由开发者 B 的 `copy_to_user` 实现提供。主体自身已经检查空输出地址与整数溢出，但不能替代页映射、写权限、对齐和跨页复制处理。B 合入前不在真实内核上开展依赖这些语义的攻击测试；目前通过主机复制替身验证 `EFAULT` 传播和部分复制失败后的控制流程。
 
 ## 14. 用户态接口约束
 
@@ -451,6 +458,16 @@ pub fn stat(stats: &mut IpcStatsV1) -> isize;
 ## 15. 测试策略
 
 ### 15.1 不依赖 A/B/C 的测试
+
+事件转换、环形缓冲区和系统调用主体已有独立的主机测试包，直接引用内核源文件；系统调用测试额外替换当前任务与用户复制。从仓库根目录执行：
+
+```bash
+cargo test --manifest-path tests/audit-host/Cargo.toml -- --test-threads=1
+```
+
+该测试验证 ABI 大小与字段偏移、操作与 errno 映射、元数据、统计转换、覆盖标志、失败记录、系统调用权限/参数检查和成功读取不产生反馈事件。真实用户页表与系统调用分发仍需集成验证；测试范围见 [主机测试说明](../tests/audit-host/README.md)。
+
+完成 602/603 系统调用和用户库后，再开展以下用户态测试。
 
 当前初始进程 UID 为 0，可以利用无效 `ipc_stat(flags != 0)` 生成确定的失败事件，独立验证：
 
