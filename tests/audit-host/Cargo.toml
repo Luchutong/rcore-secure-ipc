@@ -11,5 +11,9 @@ path = "lib.rs"
 name = "syscalls"
 path = "syscalls.rs"
 
+[[test]]
+name = "auditctl"
+path = "auditctl.rs"
+
 [dependencies]
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
