@@ -15,15 +15,18 @@ const SYSCALL_GETPID: usize = 172;
 const SYSCALL_FORK: usize = 220;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_WAITPID: usize = 260;
+const SYSCALL_AUDIT_READ: usize = 602;
+const SYSCALL_IPC_STAT: usize = 603;
 
 mod fs;
 mod process;
-// 先编译审计系统调用主体；602/603 分发在后续集成接线时单独登记。
 mod security;
 
 use fs::*;
 use process::*;
+use security::{sys_audit_read, sys_ipc_stat};
 
+use crate::security::audit::{AuditRecordV1, IpcStatsV1};
 use crate::task::SignalAction;
 
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
@@ -49,6 +52,10 @@ pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_FORK => sys_fork(),
         SYSCALL_EXEC => sys_exec(args[0] as *const u8, args[1] as *const usize),
         SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),
+        SYSCALL_AUDIT_READ => {
+            sys_audit_read(args[0] as *mut AuditRecordV1, args[1], args[2] as u64)
+        }
+        SYSCALL_IPC_STAT => sys_ipc_stat(args[0] as *mut IpcStatsV1, args[1], args[2]),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }
 }
