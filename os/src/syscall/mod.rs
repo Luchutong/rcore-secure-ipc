@@ -18,6 +18,8 @@ const SYSCALL_WAITPID: usize = 260;
 
 mod fs;
 mod process;
+// 先编译审计系统调用主体；602/603 分发在后续集成接线时单独登记。
+mod security;
 
 use fs::*;
 use process::*;
