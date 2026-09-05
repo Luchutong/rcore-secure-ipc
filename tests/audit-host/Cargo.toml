@@ -1,0 +1,15 @@
+[package]
+name = "audit-host-tests"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+[[test]]
+name = "syscalls"
+path = "syscalls.rs"
+
+[dependencies]
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
