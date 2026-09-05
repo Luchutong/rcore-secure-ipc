@@ -9,6 +9,7 @@ macro_rules! linker_symbol_addr {
 
 #[macro_use]
 pub mod console;
+pub mod audit;
 mod lang_items;
 mod syscall;
 

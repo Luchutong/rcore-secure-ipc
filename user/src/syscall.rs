@@ -1,6 +1,7 @@
 use core::arch::asm;
 
 use crate::SignalAction;
+use crate::audit::{AuditRecordV1, IpcStatsV1};
 
 const SYSCALL_DUP: usize = 24;
 const SYSCALL_OPEN: usize = 56;
@@ -19,6 +20,8 @@ const SYSCALL_GETPID: usize = 172;
 const SYSCALL_FORK: usize = 220;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_WAITPID: usize = 260;
+const SYSCALL_AUDIT_READ: usize = 602;
+const SYSCALL_IPC_STAT: usize = 603;
 
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
@@ -124,4 +127,19 @@ pub fn sys_sigprocmask(mask: u32) -> isize {
 
 pub fn sys_sigreturn() -> isize {
     syscall(SYSCALL_SIGRETURN, [0, 0, 0])
+}
+
+pub(crate) fn sys_audit_read(
+    records: *mut AuditRecordV1,
+    capacity: usize,
+    after_sequence: u64,
+) -> isize {
+    syscall(
+        SYSCALL_AUDIT_READ,
+        [records as usize, capacity, after_sequence as usize],
+    )
+}
+
+pub(crate) fn sys_ipc_stat(stats: *mut IpcStatsV1, out_size: usize, flags: usize) -> isize {
+    syscall(SYSCALL_IPC_STAT, [stats as usize, out_size, flags])
 }
