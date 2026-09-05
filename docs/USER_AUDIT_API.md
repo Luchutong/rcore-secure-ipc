@@ -1,6 +1,6 @@
 # 用户态审计 API 设计说明
 
-状态：已按设计接入用户库；内核 602/603 总路由尚待独立提交
+状态：已接入用户库与内核 602/603 总路由；使用工具见 [auditctl 设计与使用](AUDITCTL.md)。
 
 对应内核接口：[内核 602/603 系统调用主体](AUDIT_SYSCALLS.md)
 
@@ -328,7 +328,7 @@ total_events == successful_events + failed_events
 
 ## 12. `auditctl` 使用约定
 
-后续工具只依赖安全 API：
+已实现的工具只依赖安全 API，具体读取策略见 [auditctl 设计与使用](AUDITCTL.md)：
 
 ```text
 auditctl stat
@@ -337,12 +337,13 @@ auditctl stat
   → 输出容量、保留数、总数、成功数、失败数和覆盖数
 
 auditctl read
-  → 使用 32 条栈数组
+  → audit::stat，保存本次目标尾部 next_sequence - 1
+  → 使用 32 条栈数组，可选传入初始游标
   → audit::read
   → 检查负返回值
   → 按 sequence 顺序输出
   → 使用最后一条 sequence 继续读取
-  → 返回 0 后结束
+  → 到达初始尾部或返回 0 后结束
 ```
 
 工具只显示安全元数据，不尝试把 `object_id` 当作地址，也不输出用户载荷。未知 UID、未知操作和未知标志必须使用数值或明确占位文本表示。

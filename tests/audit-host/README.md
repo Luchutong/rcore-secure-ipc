@@ -1,4 +1,4 @@
-# 审计事件与系统调用主体的主机测试
+# 审计事件、系统调用主体与 auditctl 的主机测试
 
 从仓库根目录运行：
 
@@ -28,6 +28,14 @@ cargo test --manifest-path tests/audit-host/Cargo.toml -- --test-threads=1
 cargo test --manifest-path tests/audit-host/Cargo.toml --test syscalls
 ```
 
+`auditctl.rs` 直接引用真实 CLI 和 `user/src/audit.rs`，用线程局部的系统调用应答队列
+检查 32 条分页请求和游标推进，并捕获输出验证覆盖提示、未知编号及错误前缀丢弃。
+这 12 项工具测试不使用内核全局状态，可并行执行：
+
+```bash
+cargo test --manifest-path tests/audit-host/Cargo.toml --test auditctl
+```
+
 主机测试不验证真实时钟、真实用户页表的安全复制、602/603 分发或 A/B/C 的事件接线。
 复制替身返回 `EFAULT` 只能证明主体正确传播错误，不能证明 B 的实现已经完成。
 内核编译和已有用户程序的回归仍需运行：
@@ -35,3 +43,6 @@ cargo test --manifest-path tests/audit-host/Cargo.toml --test syscalls
 ```bash
 make -C os run TEST=1
 ```
+
+回归入口已包含 `auditctl_test`，它经真实 602/603 路由生成事件并调用 CLI，验证统计、
+超过 32 条的分页、游标、覆盖提示和无自反馈。详见 [工具设计](../../docs/AUDITCTL.md)。
