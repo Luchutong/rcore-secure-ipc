@@ -213,6 +213,9 @@ feat: add auditctl user tool
 
 ## 八、独立审计测试
 
+测试设计已整理到 [游标、覆盖与统计测试设计](AUDIT_TEST_DESIGN.md)，包含独立事件源、
+测试矩阵、精确计数公式、QEMU 缓冲区约束及分阶段验收方法。用户态实现及实际验证见该文档第11节。
+
 新增文件：
 
 ```text
@@ -221,21 +224,21 @@ user/src/bin/audit_test.rs
 
 任务：
 
-- [ ] 验证 `AuditRecordV1` 大小为 80。
-- [ ] 验证 `IpcStatsV1` 大小为 80。
-- [ ] 验证从日志尾部读取返回 0。
-- [ ] 验证事件序号单调递增。
-- [ ] 验证使用新游标不会重复读取。
-- [ ] 验证一次最多读取规定数量。
-- [ ] 验证缓冲区覆盖最旧记录。
-- [ ] 验证覆盖后设置 `GAP_BEFORE`。
-- [ ] 验证 `overwritten_events` 增加。
-- [ ] 验证 `retained <= capacity`。
-- [ ] 验证 `total_events == successful_events + failed_events`。
-- [ ] 验证 `flags != 0` 的 `ipc_stat` 返回 `-EINVAL`。
-- [ ] 利用无效 `ipc_stat` 参数生成独立失败事件。
-- [ ] 验证成功读取不会不断制造新的审计事件。
-- [ ] 测试采用统计增量，不依赖全局计数初始值。
+- [x] 验证 `AuditRecordV1` 大小为 80。
+- [x] 验证 `IpcStatsV1` 大小为 80。
+- [x] 验证从日志尾部读取返回 0。
+- [x] 验证事件序号单调递增。
+- [x] 验证使用新游标不会重复读取。
+- [x] 验证一次最多读取规定数量。
+- [x] 验证缓冲区覆盖最旧记录。
+- [x] 验证覆盖后设置 `GAP_BEFORE`。
+- [x] 验证 `overwritten_events` 增加。
+- [x] 验证 `retained <= capacity`。
+- [x] 验证 `total_events == successful_events + failed_events`。
+- [x] 验证 `flags != 0` 的 `ipc_stat` 返回 `-EINVAL`。
+- [x] 利用无效 `ipc_stat` 参数生成独立失败事件。
+- [x] 验证成功读取不会不断制造新的审计事件。
+- [x] 测试采用统计增量，不依赖全局计数初始值。
 
 建议提交：
 
@@ -293,10 +296,10 @@ user/src/bin/usertests.rs
 
 任务：
 
-- [ ] 将 `audit_test` 加入 `SUCC_TESTS`。
-- [ ] 确认 `make run TEST=1` 会执行审计测试。
-- [ ] 确认审计测试失败会让 CI 失败。
-- [ ] 保留原有 rCore 用户测试。
+- [x] 将 `audit_test` 加入 `SUCC_TESTS`。
+- [x] 确认 `make run TEST=1` 会执行审计测试。
+- [x] 确认审计测试失败会让 CI 失败（本地复用CI命令，临时失败断言验证make非零退出；远端Actions待推送后验证）。
+- [x] 保留原有 rCore 用户测试。
 - [ ] 不扩大普通 CI 的 GitHub Token 权限。
 - [ ] 不允许功能分支发布 `gh-pages`。
 - [ ] 只有确实需要时才修改 CI 工作流。

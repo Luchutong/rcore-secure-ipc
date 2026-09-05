@@ -31,6 +31,7 @@ static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
     ("sig_tests\0", "\0", "\0", "\0", 0),
     ("yield\0", "\0", "\0", "\0", 0),
     ("auditctl_test\0", "\0", "\0", "\0", 0),
+    ("audit_test\0", "\0", "\0", "\0", 0),
 ];
 
 static FAIL_TESTS: &[(&str, &str, &str, &str, i32)] = &[
