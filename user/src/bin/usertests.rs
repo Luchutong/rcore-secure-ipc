@@ -24,6 +24,7 @@ static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
     ("pipe_large_test\0", "\0", "\0", "\0", 0),
     ("pipetest\0", "\0", "\0", "\0", 0),
     ("run_pipe_test\0", "\0", "\0", "\0", 0),
+    ("quota_test\0", "\0", "\0", "\0", 0),
     ("sleep_simple\0", "\0", "\0", "\0", 0),
     ("sleep\0", "\0", "\0", "\0", 0),
     ("sig_simple\0", "\0", "\0", "\0", 0),
