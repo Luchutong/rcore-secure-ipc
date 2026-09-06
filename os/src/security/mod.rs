@@ -64,3 +64,34 @@ pub fn complete(
     audit::record(&permit.request, &outcome);
     outcome
 }
+/// Reserve one ordinary file-descriptor slot.
+///
+/// This crate-private hook keeps syscall code outside the quota module.
+pub(crate) fn reserve_file_fd(state: &mut ProcessSecurityState) -> IpcResult<()> {
+    state.quota.reserve_files(1)
+}
+
+/// Reserve quota for duplicating an existing descriptor.
+///
+/// Returns whether the source descriptor is a pipe endpoint.
+pub(crate) fn reserve_dup_fd(
+    state: &mut ProcessSecurityState,
+    source_fd: usize,
+) -> IpcResult<bool> {
+    state.quota.reserve_dup_fd(source_fd)
+}
+
+/// Register an already-reserved descriptor as a pipe endpoint.
+pub(crate) fn register_pipe_fd(state: &mut ProcessSecurityState, fd: usize) {
+    state.quota.register_pipe_fd(fd);
+}
+
+/// Remove pipe metadata without releasing the pending quota reservation.
+pub(crate) fn unregister_pipe_fd(state: &mut ProcessSecurityState, fd: usize) {
+    state.quota.unregister_pipe_fd(fd);
+}
+
+/// Release one committed descriptor and its associated quota.
+pub(crate) fn release_fd(state: &mut ProcessSecurityState, fd: usize) {
+    state.quota.release_fd(fd);
+}

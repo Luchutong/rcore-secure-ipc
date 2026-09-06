@@ -141,6 +141,33 @@ impl QuotaState {
         self.pipe_fd_mask & (1u64 << fd) != 0
     }
 
+    /// Reserve quota for duplicating an existing descriptor.
+    ///
+    /// Returns whether the source descriptor is a pipe endpoint so the
+    /// caller can register the newly allocated descriptor accordingly.
+    pub fn reserve_dup_fd(&mut self, source_fd: usize) -> IpcResult<bool> {
+        let is_pipe = self.is_pipe_fd(source_fd);
+
+        if is_pipe {
+            self.reserve_pipe_fds(1)?;
+        } else {
+            self.reserve_files(1)?;
+        }
+
+        Ok(is_pipe)
+    }
+
+    /// Remove pipe metadata without changing quota counters.
+    ///
+    /// This is used when an operation has installed pipe descriptors but
+    /// later fails. The quota reservation itself is rolled back by
+    /// `complete`.
+    pub fn unregister_pipe_fd(&mut self, fd: usize) {
+        if fd < u64::BITS as usize {
+            self.pipe_fd_mask &= !(1u64 << fd);
+        }
+    }
+
     /// Release one committed descriptor.
     ///
     /// If the descriptor is a pipe endpoint, both the total FD counter and
