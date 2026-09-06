@@ -1,6 +1,8 @@
 //! IPC quota extension point.
 
+use super::IpcOperation;
 use super::{IpcError, IpcRequest, IpcResult};
+use crate::task::{current_task, pid2task};
 
 /// Maximum number of open file descriptors per process.
 pub const MAX_OPEN_FILES: usize = 32;
@@ -164,20 +166,76 @@ impl QuotaState {
 
 /// Opaque reservation carried by the security facade.
 ///
-/// The facade is not yet wired to the per-process `QuotaState`; the concrete
-/// accounting helpers above remain ready for that integration step.
-pub(crate) struct QuotaReservation;
+/// A pipe creation reserves its two endpoint descriptors before the pipe is
+/// allocated.  Keeping the owner PID and reserved amount here lets
+/// `security::complete` roll that reservation back without changing the
+/// public facade API.
+pub(crate) struct QuotaReservation {
+    owner_pid: Option<usize>,
+    pipe_fds: usize,
+}
+
+impl QuotaReservation {
+    const fn none() -> Self {
+        Self {
+            owner_pid: None,
+            pipe_fds: 0,
+        }
+    }
+}
 
 /// Reserve resources requested through the stable security facade.
 ///
-/// This remains a facade stub until the integration layer provides access to
-/// the requesting process's `QuotaState`.
-pub(crate) fn reserve(_request: &IpcRequest) -> IpcResult<QuotaReservation> {
-    Ok(QuotaReservation)
+/// The current task is resolved internally so the public
+/// `security::preflight(IpcRequest)` contract does not need to expose task or
+/// quota implementation details. Only pipe creation consumes quota through
+/// the IPC facade; ordinary `open`, `dup`, and `close` use the lifecycle
+/// helpers on `QuotaState` from C-owned filesystem syscall code.
+pub(crate) fn reserve(request: &IpcRequest) -> IpcResult<QuotaReservation> {
+    if request.operation != IpcOperation::PipeCreate {
+        return Ok(QuotaReservation::none());
+    }
+
+    let task = current_task().ok_or(IpcError::ProcessNotFound)?;
+    let owner_pid = task.getpid();
+
+    // Kernel call sites construct IpcRequest from the current task. Reject a
+    // mismatched subject rather than charging another process accidentally.
+    if request.subject.pid != owner_pid {
+        return Err(IpcError::InvalidArgument);
+    }
+
+    let mut inner = task.inner_exclusive_access();
+    inner.security.quota.reserve_pipe_fds(2)?;
+
+    Ok(QuotaReservation {
+        owner_pid: Some(owner_pid),
+        pipe_fds: 2,
+    })
 }
 
 /// Complete or roll back a quota reservation.
 ///
-/// This remains a facade stub until per-process quota state is wired through
-/// the security facade.
-pub(crate) fn finish(_reservation: QuotaReservation, _success: bool) {}
+/// Successful reservations were already charged during `reserve`. A failed
+/// operation releases the exact reservation from the originating process.
+pub(crate) fn finish(reservation: QuotaReservation, success: bool) {
+    if success || reservation.pipe_fds == 0 {
+        return;
+    }
+
+    let Some(owner_pid) = reservation.owner_pid else {
+        return;
+    };
+    let Some(task) = pid2task(owner_pid) else {
+        // A permit is completed in the same syscall that created it, so the
+        // task should still be registered. Avoid touching unrelated state if
+        // that invariant is ever broken.
+        debug_assert!(false, "quota reservation owner disappeared");
+        return;
+    };
+
+    task.inner_exclusive_access()
+        .security
+        .quota
+        .release_pipe_fds(reservation.pipe_fds);
+}
