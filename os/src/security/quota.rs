@@ -24,6 +24,11 @@ pub struct QuotaState {
     /// This counts endpoints rather than pipe objects. Therefore one newly
     /// created pipe normally contributes two.
     pub open_pipes: usize,
+
+    /// Bitmap recording which descriptor numbers refer to pipe endpoints.
+    ///
+    /// `MAX_OPEN_FILES` is currently 32, so a u64 is sufficient.
+    pipe_fd_mask: u64,
 }
 
 impl Default for QuotaState {
@@ -40,11 +45,12 @@ impl QuotaState {
         Self {
             open_files: 3,
             open_pipes: 0,
+            pipe_fd_mask: 0,
         }
     }
 
     /// Fork inherits the parent's descriptor table, so the child starts with
-    /// the same per-process usage counters.
+    /// the same per-process usage counters and pipe-FD metadata.
     pub const fn fork_from(parent: &Self) -> Self {
         *parent
     }
@@ -66,7 +72,7 @@ impl QuotaState {
         Ok(())
     }
 
-    /// Release ordinary file descriptors.
+    /// Roll back previously reserved ordinary file descriptors.
     pub fn release_files(&mut self, amount: usize) {
         debug_assert!(self.open_files >= amount);
         self.open_files = self.open_files.saturating_sub(amount);
@@ -98,23 +104,61 @@ impl QuotaState {
             return Err(IpcError::ResourceExhausted);
         }
 
-        // Commit only after every check succeeds.
         self.open_files = next_files;
         self.open_pipes = next_pipes;
 
         Ok(())
     }
 
-    /// Release pipe endpoint descriptors.
-    ///
-    /// A pipe endpoint consumes both one total FD slot and one pipe FD slot,
-    /// so both counters are released together.
+    /// Roll back pipe descriptors before descriptor numbers are committed.
     pub fn release_pipe_fds(&mut self, amount: usize) {
         debug_assert!(self.open_files >= amount);
         debug_assert!(self.open_pipes >= amount);
 
         self.open_files = self.open_files.saturating_sub(amount);
         self.open_pipes = self.open_pipes.saturating_sub(amount);
+    }
+
+    /// Record that an already-reserved descriptor number is a pipe endpoint.
+    ///
+    /// This does not change counters; `reserve_pipe_fds` must have succeeded
+    /// before this method is called.
+    pub fn register_pipe_fd(&mut self, fd: usize) {
+        debug_assert!(fd < MAX_OPEN_FILES);
+        debug_assert!(fd < u64::BITS as usize);
+
+        if fd < u64::BITS as usize {
+            self.pipe_fd_mask |= 1u64 << fd;
+        }
+    }
+
+    /// Return whether a descriptor number is currently recorded as a pipe.
+    pub fn is_pipe_fd(&self, fd: usize) -> bool {
+        if fd >= u64::BITS as usize {
+            return false;
+        }
+
+        self.pipe_fd_mask & (1u64 << fd) != 0
+    }
+
+    /// Release one committed descriptor.
+    ///
+    /// If the descriptor is a pipe endpoint, both the total FD counter and
+    /// the pipe-specific counter are decremented.
+    pub fn release_fd(&mut self, fd: usize) {
+        let was_pipe = self.is_pipe_fd(fd);
+
+        if fd < u64::BITS as usize {
+            self.pipe_fd_mask &= !(1u64 << fd);
+        }
+
+        debug_assert!(self.open_files > 0);
+        self.open_files = self.open_files.saturating_sub(1);
+
+        if was_pipe {
+            debug_assert!(self.open_pipes > 0);
+            self.open_pipes = self.open_pipes.saturating_sub(1);
+        }
     }
 }
 
