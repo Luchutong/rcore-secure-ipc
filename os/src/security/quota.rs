@@ -1,6 +1,6 @@
 //! IPC quota extension point.
 
-use super::{IpcError, IpcRequest, IpcResult};
+use super::{IpcError, IpcOperation, IpcRequest, IpcResult};
 
 /// Maximum number of open file descriptors per process.
 pub const MAX_OPEN_FILES: usize = 32;
@@ -162,22 +162,58 @@ impl QuotaState {
     }
 }
 
-/// Opaque reservation carried by the security facade.
-///
-/// The facade is not yet wired to the per-process `QuotaState`; the concrete
-/// accounting helpers above remain ready for that integration step.
-pub(crate) struct QuotaReservation;
+/// Kind of resource represented by a pending reservation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum QuotaReservationKind {
+    /// This IPC operation does not reserve quota.
+    None,
 
-/// Reserve resources requested through the stable security facade.
-///
-/// This remains a facade stub until the integration layer provides access to
-/// the requesting process's `QuotaState`.
-pub(crate) fn reserve(_request: &IpcRequest) -> IpcResult<QuotaReservation> {
-    Ok(QuotaReservation)
+    /// Pipe endpoint descriptors were reserved.
+    PipeFds,
 }
 
-/// Complete or roll back a quota reservation.
+/// Opaque reservation carried by the security facade.
 ///
-/// This remains a facade stub until per-process quota state is wired through
-/// the security facade.
-pub(crate) fn finish(_reservation: QuotaReservation, _success: bool) {}
+/// A successful `preflight` may already have charged quota. `finish` keeps
+/// that charge on success and rolls it back on failure.
+pub(crate) struct QuotaReservation {
+    kind: QuotaReservationKind,
+    amount: usize,
+}
+
+/// Reserve resources requested through the security facade.
+///
+/// Reservation happens before the actual operation. On failure this function
+/// leaves the quota state unchanged.
+pub(crate) fn reserve(state: &mut QuotaState, request: &IpcRequest) -> IpcResult<QuotaReservation> {
+    match request.operation {
+        IpcOperation::PipeCreate => {
+            state.reserve_pipe_fds(request.amount)?;
+            Ok(QuotaReservation {
+                kind: QuotaReservationKind::PipeFds,
+                amount: request.amount,
+            })
+        }
+        _ => Ok(QuotaReservation {
+            kind: QuotaReservationKind::None,
+            amount: 0,
+        }),
+    }
+}
+
+/// Commit or roll back a quota reservation.
+///
+/// Successful operations keep the quota charged. Failed operations release
+/// exactly the resources reserved during `preflight`.
+pub(crate) fn finish(state: &mut QuotaState, reservation: QuotaReservation, success: bool) {
+    if success {
+        return;
+    }
+
+    match reservation.kind {
+        QuotaReservationKind::None => {}
+        QuotaReservationKind::PipeFds => {
+            state.release_pipe_fds(reservation.amount);
+        }
+    }
+}

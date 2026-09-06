@@ -45,9 +45,9 @@ pub struct IpcPermit {
 }
 
 /// Run authorization and quota checks through stable module boundaries.
-pub fn preflight(request: IpcRequest) -> IpcResult<IpcPermit> {
+pub fn preflight(state: &mut ProcessSecurityState, request: IpcRequest) -> IpcResult<IpcPermit> {
     policy::authorize(&request)?;
-    let reservation = quota::reserve(&request)?;
+    let reservation = quota::reserve(&mut state.quota, &request)?;
     Ok(IpcPermit {
         request,
         reservation,
@@ -55,8 +55,12 @@ pub fn preflight(request: IpcRequest) -> IpcResult<IpcPermit> {
 }
 
 /// Finish a request, update quota state, and emit its audit outcome.
-pub fn complete(permit: IpcPermit, outcome: IpcResult<usize>) -> IpcResult<usize> {
-    quota::finish(permit.reservation, outcome.is_ok());
+pub fn complete(
+    state: &mut ProcessSecurityState,
+    permit: IpcPermit,
+    outcome: IpcResult<usize>,
+) -> IpcResult<usize> {
+    quota::finish(&mut state.quota, permit.reservation, outcome.is_ok());
     audit::record(&permit.request, &outcome);
     outcome
 }
