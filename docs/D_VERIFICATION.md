@@ -13,7 +13,7 @@
 | A | `feature/credentials-authz` | `ecfee9b` | 2 / 2 | 最近一次分支 CI 成功 | 分支尚未同步 ABI 基线；信号路径尚未统一经过 `preflight/complete`；测试未登记到 `usertests`；公共 syscall 编号与冻结文档不一致 |
 | B | `feature/user-access` | `0760a25` | 2 / 0 | 提交已包含在 `integration` | `copy_from_user/copy_to_user` 仍是 `translated_ref/translated_refmut` 的兼容封装，尚未提供地址溢出、跨页、映射和写权限安全语义 |
 | C | `feature/ipc-resource` | `20ab386` | 2 / 7 | 分支 CI 成功；已完成 C+D 预览联调 | 管道创建和配额生命周期已实现；管道读写审计仍未接线，分支对冻结门面文件有修改，需通过集成提交统一处理 |
-| D | `feature/audit-testing` | 见本文所在分支最新提交 | 0 / 16 | 独立审计、压力测试及 PR #1 既有 CI 成功 | 等待 A/B 接口后完成真实权限、信号和恶意用户地址联合测试；等待 C 的管道读写事件 |
+| D | `feature/audit-testing` | 见本文所在分支最新提交 | 0 / 17 | 独立审计及压力实现提交 `ea82dd6` 的 push/PR CI 均成功 | 等待 A/B 接口后完成真实权限、信号和恶意用户地址联合测试；等待 C 的管道读写事件 |
 
 D 功能 PR：<https://github.com/Luchutong/rcore-secure-ipc/pull/1>
 
@@ -43,7 +43,7 @@ make run TEST=1
 - 临时令压力子进程返回 7 后，失败依次传播为压力测试 1、包装器 1、`usertests` 27/28 和 `make` 非零；恢复后不保留故障注入；
 - 用户 shell 中运行 `until_timeout infloop 100`，100 ms 后以信号编号 9 触发 `SIGKILL`，完成回收并返回 shell；这同时修复了旧实现误传信号位掩码后永久等待的问题；
 - 修复原有多进程信号测试的父子退出竞态后，`sig_tests` 在同一次 QEMU 启动中连续运行 10 次全部通过，随后完整 QEMU 27/27 通过；
-- GitHub Actions `34356274208`、`34356278842`：文档构建和 rCore 用户测试均成功（新增压力测试的远端 CI 尚待本提交推送后验证）；
+- GitHub Actions `34359479710`（push）、`34359485457`（PR）：压力实现提交 `ea82dd6` 的文档构建和 28/28 QEMU 用户测试均成功；
 - 功能分支上的文档发布任务按策略跳过，只有 `main` 可以发布 `gh-pages`；
 - `preflight` 的授权和配额拒绝路径会写失败审计记录，且保留原错误返回值。
 
@@ -67,9 +67,9 @@ make run TEST=1
 
 结果：宿主侧 28/28 通过；加入多进程审计压力测试后，QEMU 26 个正常用例与 4 个预期失败
 用例，共 30/30 通过。`quota_test`、`ipc_audit_integration_test`、`auditctl_test`、`audit_test`
-和 `audit_stress_test` 均通过，其中压力测试精确记录 768 条失败事件。此前 GitHub Actions
-`34331641132` 的文档构建和 QEMU 用户测试成功；新增压力测试的远端 CI 待分支推送后验证，
-功能分支的发布任务仍应按策略跳过。
+和 `audit_stress_test` 均通过，其中压力测试精确记录 768 条失败事件。GitHub Actions
+`34359479579` 对预览提交 `6e597d9` 的文档构建和 30/30 QEMU 用户测试均成功，功能分支的
+发布任务按策略跳过。
 
 ## 4. 尚不能宣告完成的联合验收
 
