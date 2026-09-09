@@ -10,7 +10,7 @@
 - [x] 确认本地仓库远程地址正确。
 - [x] 将个人分支同步到最新 `integration`。
 - [x] 确认包含审计 ABI 提交 `8364fb3`。
-- [ ] 运行原始基线测试并保存结果。
+- [x] 运行原始基线测试并保存结果（`main@a74354d`，QEMU 25/25 通过，见 `docs/D_VERIFICATION.md`）。
 
 ```bash
 git fetch origin integration
