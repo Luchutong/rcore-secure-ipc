@@ -46,8 +46,19 @@ pub struct IpcPermit {
 
 /// Run authorization and quota checks through stable module boundaries.
 pub fn preflight(request: IpcRequest) -> IpcResult<IpcPermit> {
-    policy::authorize(&request)?;
-    let reservation = quota::reserve(&request)?;
+    if let Err(error) = policy::authorize(&request) {
+        audit::record(&request, &Err(error));
+        return Err(error);
+    }
+
+    let reservation = match quota::reserve(&request) {
+        Ok(reservation) => reservation,
+        Err(error) => {
+            audit::record(&request, &Err(error));
+            return Err(error);
+        }
+    };
+
     Ok(IpcPermit {
         request,
         reservation,
