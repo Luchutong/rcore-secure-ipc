@@ -36,6 +36,8 @@ static SUCC_TESTS: &[TestCase] = &[
     // `make run TEST=1`; a non-zero exit from either test must fail the suite.
     ("auditctl_test\0", "\0", "\0", "\0", 0),
     ("audit_test\0", "\0", "\0", "\0", 0),
+    // 压力用例由包装程序施加 10 秒独立超时，并传播子进程退出码。
+    ("until_timeout\0", "audit_stress_test\0", "10000\0", "\0", 0),
 ];
 
 static FAIL_TESTS: &[TestCase] = &[
@@ -47,8 +49,13 @@ static FAIL_TESTS: &[TestCase] = &[
 
 use user_lib::{exec, exit, fork, waitpid};
 
-fn test_name(program: &str) -> &str {
-    program.strip_suffix('\0').unwrap_or(program)
+fn test_name(test: &TestCase) -> &str {
+    let program = test.0.strip_suffix('\0').unwrap_or(test.0);
+    if program == "until_timeout" {
+        test.1.strip_suffix('\0').unwrap_or(test.1)
+    } else {
+        program
+    }
 }
 
 fn argv_for(test: &TestCase) -> [*const u8; 4] {
@@ -72,7 +79,7 @@ fn run_tests(suite: &str, tests: &[TestCase]) -> usize {
     );
 
     for test in tests {
-        let name = test_name(test.0);
+        let name = test_name(test);
         let argv = argv_for(test);
         println!("[usertests] RUN  {}", name);
 
