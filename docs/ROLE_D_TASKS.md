@@ -268,10 +268,10 @@ test: add audit cursor and overflow tests
 
 ### 与角色 C 集成
 
-- [x] 验证管道创建产生审计记录（`audit-c-integration-preview@e8a06cc`）。
+- [x] 验证管道创建产生审计记录（`ipc_audit_integration_test`）。
 - [ ] 验证管道读写记录请求及实际字节数。
-- [x] 验证资源耗尽产生 `ENOSPC` 审计事件（`audit-c-integration-preview@e8a06cc`）。
-- [x] 验证配额失败回滚后统计正确（`audit-c-integration-preview@e8a06cc`）。
+- [x] 验证资源耗尽产生 `ENOSPC` 审计事件（`ipc_audit_integration_test`）。
+- [x] 验证配额失败回滚后统计正确（`ipc_audit_integration_test`）。
 - [x] 验证管道关闭和进程退出不会产生资源泄漏（C 的 `quota_test` 与 D+C 联调用例）。
 
 建议提交：
@@ -304,7 +304,7 @@ user/src/bin/usertests.rs
 - [x] 不允许功能分支发布 `gh-pages`。
 - [x] 只有确实需要时才修改 CI 工作流。
 - [ ] 如增加压力测试，为其设置合理超时。
-- [x] 保存必要的测试日志（见 `docs/D_VERIFICATION.md`；性能数据仍待最终集成后补充）。
+- [x] 保存必要的测试日志和预集成性能数据（见 `docs/D_VERIFICATION.md` 与 `docs/PERFORMANCE.md`）。
 
 建议提交：
 

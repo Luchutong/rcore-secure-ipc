@@ -13,15 +13,15 @@
 | A | `feature/credentials-authz` | `ecfee9b` | 2 / 2 | 最近一次分支 CI 成功 | 分支尚未同步 ABI 基线；信号路径尚未统一经过 `preflight/complete`；测试未登记到 `usertests`；公共 syscall 编号与冻结文档不一致 |
 | B | `feature/user-access` | `0760a25` | 2 / 0 | 提交已包含在 `integration` | `copy_from_user/copy_to_user` 仍是 `translated_ref/translated_refmut` 的兼容封装，尚未提供地址溢出、跨页、映射和写权限安全语义 |
 | C | `feature/ipc-resource` | `20ab386` | 2 / 7 | 分支 CI 成功；已完成 C+D 预览联调 | 管道创建和配额生命周期已实现；管道读写审计仍未接线，分支对冻结门面文件有修改，需通过集成提交统一处理 |
-| D | `feature/audit-testing` | `ec2ce51` | 0 / 11 | PR #1 的文档和 QEMU CI 全部成功 | 等待 A/B 接口后完成真实权限、信号和恶意用户地址联合测试；等待 C 的管道读写事件 |
+| D | `feature/audit-testing` | 见本文所在分支最新提交 | 0 / 13 | PR #1 的文档和 QEMU CI 全部成功 | 等待 A/B 接口后完成真实权限、信号和恶意用户地址联合测试；等待 C 的管道读写事件 |
 
 D 功能 PR：<https://github.com/Luchutong/rcore-secure-ipc/pull/1>
 
-C+D 联调分支：`audit-c-integration-preview`，最新提交 `e8a06cc`。该分支用于提前暴露接口问题，不代替各角色面向 `integration` 的正式 PR。
+C+D 联调分支：`audit-c-integration-preview`。该分支用于提前暴露接口问题，不代替各角色面向 `integration` 的正式 PR。
 
 ## 2. D 独立实现验证
 
-在 `feature/audit-testing@ec2ce51` 上执行：
+在角色 D 的功能实现提交 `8e2d38d` 上执行：
 
 ```bash
 cd tests/audit-host
@@ -43,7 +43,7 @@ make run TEST=1
 
 ## 3. C+D 提前联调验证
 
-`audit-c-integration-preview@e8a06cc` 合并 C 的 `20ab386` 后，额外完成：
+`audit-c-integration-preview` 合并 C 的 `20ab386` 后，额外完成：
 
 - 将审计 ABI 中一次 `PipeCreate` 的 `requested_amount` 固定为 1，配额内部仍原子预留两个端点；
 - 调整 `auditctl_test`，正确识别测试捕获输出时产生的真实管道创建事件；
@@ -66,7 +66,7 @@ make run TEST=1
 - A：需要稳定的 UID/Capability 设置方式，并让 `kill` 经过统一门面，才能验证 root、`AUDIT_READ`、普通用户及信号成功/拒绝审计。
 - B：需要真正返回 `Result` 的用户地址复制实现，才能在 QEMU 中证明空指针、只读页、跨页无效范围和地址溢出不会引发内核 panic。
 - C：需要在管道读写路径构造 `PipeRead/PipeWrite` 请求并调用统一门面，才能验证请求字节数与实际字节数。
-- 全项目：尚缺原版与安全改造版的定量性能对比、最终集成压力数据和演示材料。
+- 全项目：已完成 C+D 管道创建安全路径的[性能初测](PERFORMANCE.md)，尚缺原版与最终安全版本的正式对比、最终集成压力数据和演示材料。
 
 因此，目前可以确认 D 的独立审计机制和 C 的管道创建/配额联调通过，但不能把 A、B、C 全部联合验收或项目最终性能验收标记为完成。
 
