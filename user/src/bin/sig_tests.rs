@@ -3,9 +3,13 @@
 
 extern crate user_lib;
 
+use core::sync::atomic::{AtomicBool, Ordering};
 use user_lib::*;
 
+static SIGNAL_RECEIVED: AtomicBool = AtomicBool::new(false);
+
 fn func() {
+    SIGNAL_RECEIVED.store(true, Ordering::SeqCst);
     println!("func triggered");
     sigreturn();
 }
@@ -34,21 +38,40 @@ fn user_sig_test_kill() {
 }
 
 fn user_sig_test_multiprocsignals() {
+    SIGNAL_RECEIVED.store(false, Ordering::SeqCst);
+    let mut ready_pipe = [0usize; 2];
+    assert_eq!(pipe(&mut ready_pipe), 0);
+
     let pid = fork();
     if pid == 0 {
+        assert_eq!(close(ready_pipe[0]), 0);
         let mut new = SignalAction::default();
         let mut old = SignalAction::default();
         new.handler = linker_symbol_addr!(func);
         if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {
             panic!("Sigaction failed!");
         }
+
+        // 处理器安装完成后才通知父进程，并保持存活直到处理器确认收到信号。
+        assert_eq!(write(ready_pipe[1], &[1]), 1);
+        assert_eq!(close(ready_pipe[1]), 0);
+        while !SIGNAL_RECEIVED.load(Ordering::SeqCst) {
+            yield_();
+        }
     } else {
+        assert_eq!(close(ready_pipe[1]), 0);
+        let mut ready = [0u8; 1];
+        assert_eq!(read(ready_pipe[0], &mut ready), 1);
+        assert_eq!(ready, [1]);
+        assert_eq!(close(ready_pipe[0]), 0);
+
         if kill(pid as usize, SIGUSR1) < 0 {
             println!("Kill failed!");
             exit(1);
         }
         let mut exit_code = 0;
-        wait(&mut exit_code);
+        assert_eq!(waitpid(pid as usize, &mut exit_code), pid);
+        assert_eq!(exit_code, 0);
     }
 }
 

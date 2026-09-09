@@ -13,7 +13,7 @@
 | A | `feature/credentials-authz` | `ecfee9b` | 2 / 2 | 最近一次分支 CI 成功 | 分支尚未同步 ABI 基线；信号路径尚未统一经过 `preflight/complete`；测试未登记到 `usertests`；公共 syscall 编号与冻结文档不一致 |
 | B | `feature/user-access` | `0760a25` | 2 / 0 | 提交已包含在 `integration` | `copy_from_user/copy_to_user` 仍是 `translated_ref/translated_refmut` 的兼容封装，尚未提供地址溢出、跨页、映射和写权限安全语义 |
 | C | `feature/ipc-resource` | `20ab386` | 2 / 7 | 分支 CI 成功；已完成 C+D 预览联调 | 管道创建和配额生命周期已实现；管道读写审计仍未接线，分支对冻结门面文件有修改，需通过集成提交统一处理 |
-| D | `feature/audit-testing` | 见本文所在分支最新提交 | 0 / 14 | PR #1 的文档和 QEMU CI 全部成功 | 等待 A/B 接口后完成真实权限、信号和恶意用户地址联合测试；等待 C 的管道读写事件 |
+| D | `feature/audit-testing` | 见本文所在分支最新提交 | 0 / 15 | PR #1 的文档和 QEMU CI 全部成功 | 等待 A/B 接口后完成真实权限、信号和恶意用户地址联合测试；等待 C 的管道读写事件 |
 
 D 功能 PR：<https://github.com/Luchutong/rcore-secure-ipc/pull/1>
 
@@ -38,6 +38,7 @@ make run TEST=1
 - 原始 `main@a74354d` 基线：21 个正常用例与 4 个预期失败用例，25/25 通过；
 - 宿主侧 ABI、环形缓冲区、系统调用与 `auditctl` 测试：28/28 通过；
 - D 分支 QEMU 回归：23 个正常用例与 4 个预期失败用例，27/27 通过；
+- 修复原有多进程信号测试的父子退出竞态后，`sig_tests` 在同一次 QEMU 启动中连续运行 10 次全部通过，随后完整 QEMU 27/27 通过；
 - GitHub Actions `34330593120`、`34330587684`：文档构建和 rCore 用户测试均成功；
 - 功能分支上的文档发布任务按策略跳过，只有 `main` 可以发布 `gh-pages`；
 - `preflight` 的授权和配额拒绝路径会写失败审计记录，且保留原错误返回值。
