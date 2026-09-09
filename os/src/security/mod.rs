@@ -45,13 +45,13 @@ pub struct IpcPermit {
 }
 
 /// Run authorization and quota checks through stable module boundaries.
-pub fn preflight(request: IpcRequest) -> IpcResult<IpcPermit> {
+pub fn preflight(state: &mut ProcessSecurityState, request: IpcRequest) -> IpcResult<IpcPermit> {
     if let Err(error) = policy::authorize(&request) {
         audit::record(&request, &Err(error));
         return Err(error);
     }
 
-    let reservation = match quota::reserve(&request) {
+    let reservation = match quota::reserve(&mut state.quota, &request) {
         Ok(reservation) => reservation,
         Err(error) => {
             audit::record(&request, &Err(error));
@@ -66,8 +66,43 @@ pub fn preflight(request: IpcRequest) -> IpcResult<IpcPermit> {
 }
 
 /// Finish a request, update quota state, and emit its audit outcome.
-pub fn complete(permit: IpcPermit, outcome: IpcResult<usize>) -> IpcResult<usize> {
-    quota::finish(permit.reservation, outcome.is_ok());
+pub fn complete(
+    state: &mut ProcessSecurityState,
+    permit: IpcPermit,
+    outcome: IpcResult<usize>,
+) -> IpcResult<usize> {
+    quota::finish(&mut state.quota, permit.reservation, outcome.is_ok());
     audit::record(&permit.request, &outcome);
     outcome
+}
+/// Reserve one ordinary file-descriptor slot.
+///
+/// This crate-private hook keeps syscall code outside the quota module.
+pub(crate) fn reserve_file_fd(state: &mut ProcessSecurityState) -> IpcResult<()> {
+    state.quota.reserve_files(1)
+}
+
+/// Reserve quota for duplicating an existing descriptor.
+///
+/// Returns whether the source descriptor is a pipe endpoint.
+pub(crate) fn reserve_dup_fd(
+    state: &mut ProcessSecurityState,
+    source_fd: usize,
+) -> IpcResult<bool> {
+    state.quota.reserve_dup_fd(source_fd)
+}
+
+/// Register an already-reserved descriptor as a pipe endpoint.
+pub(crate) fn register_pipe_fd(state: &mut ProcessSecurityState, fd: usize) {
+    state.quota.register_pipe_fd(fd);
+}
+
+/// Remove pipe metadata without releasing the pending quota reservation.
+pub(crate) fn unregister_pipe_fd(state: &mut ProcessSecurityState, fd: usize) {
+    state.quota.unregister_pipe_fd(fd);
+}
+
+/// Release one committed descriptor and its associated quota.
+pub(crate) fn release_fd(state: &mut ProcessSecurityState, fd: usize) {
+    state.quota.release_fd(fd);
 }
