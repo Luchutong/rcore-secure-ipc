@@ -246,6 +246,18 @@ user/src/bin/audit_test.rs
 test: add audit cursor and overflow tests
 ```
 
+## 八点五、多进程审计压力测试
+
+设计与复现方法见 [多进程审计压力测试](AUDIT_STRESS_TEST.md)。
+
+- [x] 使用多个子进程持续生成可确定计数的审计事件。
+- [x] 事件总量超过环形缓冲区容量并验证覆盖模型。
+- [x] 验证全局成功、失败、保留和覆盖统计增量。
+- [x] 验证压力后的序号连续、`GAP_BEFORE` 和日志尾部。
+- [x] 验证保留记录中的 PID 属于本轮压力子进程。
+- [x] 不将调度顺序或耗时阈值写入功能断言。
+- [x] 通过超时包装器传播执行失败并回收超时进程。
+
 ## 九、跨模块集成测试
 
 这些测试需要在 A、B、C 合并到 `integration` 后完成。
@@ -303,7 +315,7 @@ user/src/bin/usertests.rs
 - [x] 不扩大普通 CI 的 GitHub Token 权限。
 - [x] 不允许功能分支发布 `gh-pages`。
 - [x] 只有确实需要时才修改 CI 工作流。
-- [ ] 如增加压力测试，为其设置合理超时。
+- [x] 压力测试使用 10 秒独立超时，整个 QEMU CI 任务保留 10 分钟上限。
 - [x] 保存必要的测试日志和预集成性能数据（见 `docs/D_VERIFICATION.md` 与 `docs/PERFORMANCE.md`）。
 
 建议提交：
@@ -398,6 +410,7 @@ git status
 - [x] 不记录用户载荷和内核地址。
 - [x] 用户态工具可以读取并展示日志。
 - [x] 独立审计测试通过。
+- [x] 多进程审计压力测试通过且已接入 CI。
 - [ ] A、B、C 联合测试通过。
 - [x] 原有 rCore 用户测试无回退。
 - [x] GitHub Actions 全部通过（D PR #1 当前提交）。

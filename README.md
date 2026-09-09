@@ -14,13 +14,15 @@
 
 ## 当前状态
 
-项目处于基线阶段。仓库包含可供后续改造的 rCore 第七章教学内核源码，以及项目路线图和 AI 使用记录。
+项目处于并行实现与预集成阶段。仓库包含 rCore 第七章教学内核源码、已冻结的安全接口、
+各角色功能分支，以及可重复执行的审计回归、压力与性能测试。
 
 - [四人协作开发计划](docs/ROADMAP.md)
 - [团队分工与开发规范](docs/TEAM_COLLABORATION.md)
 - [IPC Security API v1](docs/IPC_SECURITY_API.md)
 - [IPC 安全审计 ABI v1](docs/AUDIT_ABI_V1.md)
 - [auditctl 工具设计与使用](docs/AUDITCTL.md)
+- [多进程审计压力测试](docs/AUDIT_STRESS_TEST.md)
 - [模块独立性审计](docs/MODULE_INDEPENDENCE.md)
 - [贡献与合并规范](CONTRIBUTING.md)
 - [AI 工具使用记录](docs/AI_USAGE.md)
