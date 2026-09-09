@@ -16,8 +16,8 @@ struct Output {
     stat: bool,
     usage: bool,
     gap: bool,
-    empty: bool,
-    ipc_stat_error: bool,
+    pipe_creates: usize,
+    ipc_stat_errors: usize,
     summary: bool,
 }
 
@@ -32,9 +32,13 @@ impl Output {
         self.stat |= line.starts_with("capacity=") && line.contains("retained=");
         self.usage |= line.starts_with("Usage: auditctl");
         self.gap |= line.contains("GAP_BEFORE");
-        self.empty |= line.starts_with("auditctl: records=0 ");
         self.summary |= line.starts_with("auditctl: records=");
-        self.ipc_stat_error |= line.contains("op=ipc_stat(6)") && line.contains("errno=22(EINVAL)");
+        if line.contains("op=pipe_create(2)") && line.contains("status=OK") {
+            self.pipe_creates += 1;
+        }
+        if line.contains("op=ipc_stat(6)") && line.contains("errno=22(EINVAL)") {
+            self.ipc_stat_errors += 1;
+        }
     }
 }
 
@@ -111,28 +115,43 @@ pub fn main() -> i32 {
 
     let before = stats();
     let cursor = alloc::format!("{}\0", before.next_sequence - 1);
-    assert!(run_tool(&["auditctl\0", "read\0", &cursor], 0).empty);
+    // run_tool creates one capture pipe before auditctl snapshots the log.
+    // Once C's real pipe auditing is connected, that event is expected and
+    // the old "tail must stay empty" assumption is no longer valid.
+    let probe = run_tool(&["auditctl\0", "read\0", &cursor], 0);
+    assert_eq!(probe.records, 1);
+    assert_eq!(probe.pipe_creates, 1);
+    let after_probe = stats();
+    assert_eq!(after_probe.total_events, before.total_events + 1);
 
     emit_failures(35);
+    let cursor = alloc::format!("{}\0", probe.last_sequence);
     let output = run_tool(&["auditctl\0", "read\0", &cursor], 0);
-    assert_eq!(output.records, 35);
-    assert!(output.ipc_stat_error && output.summary);
+    assert_eq!(output.records, 36);
+    assert_eq!(output.ipc_stat_errors, 35);
+    assert_eq!(output.pipe_creates, 1);
+    assert!(output.summary);
     let after = stats();
-    assert_eq!(after.total_events, before.total_events + 35);
-    assert_eq!(after.failed_events, before.failed_events + 35);
+    assert_eq!(after.total_events, after_probe.total_events + 36);
+    assert_eq!(after.failed_events, after_probe.failed_events + 35);
+    assert_eq!(after.successful_events, after_probe.successful_events + 1);
 
     let tail = alloc::format!("{}\0", output.last_sequence);
-    assert!(run_tool(&["auditctl\0", "read\0", &tail], 0).empty);
-    assert_eq!(stats().total_events, after.total_events);
+    let tail_probe = run_tool(&["auditctl\0", "read\0", &tail], 0);
+    assert_eq!(tail_probe.records, 1);
+    assert_eq!(tail_probe.pipe_creates, 1);
+    let after_tail_probe = stats();
+    assert_eq!(after_tail_probe.total_events, after.total_events + 1);
 
-    emit_failures(after.capacity + 1);
+    emit_failures(after_tail_probe.capacity + 1);
     let full = stats();
-    assert!(full.overwritten_events > after.overwritten_events);
+    assert!(full.overwritten_events > after_tail_probe.overwritten_events);
+    let tail = alloc::format!("{}\0", tail_probe.last_sequence);
     let output = run_tool(&["auditctl\0", "read\0", &tail], 0);
     assert!(output.gap && output.summary);
     assert_eq!(output.records as u64, full.retained);
-    assert_eq!(output.last_sequence, full.next_sequence - 1);
-    assert_eq!(stats().total_events, full.total_events);
+    assert_eq!(output.last_sequence, full.next_sequence);
+    assert_eq!(stats().total_events, full.total_events + 1);
     println!("auditctl_test passed: stat, pagination, cursor, overflow, no feedback");
     0
 }

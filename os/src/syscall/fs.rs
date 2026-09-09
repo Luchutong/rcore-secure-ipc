@@ -116,7 +116,9 @@ pub fn sys_pipe(pipe: *mut usize) -> isize {
                 owner_uid: credentials.uid,
             },
             operation: crate::security::IpcOperation::PipeCreate,
-            amount: 2,
+            // Audit ABI counts one pipe creation. quota::reserve separately
+            // charges the two file-descriptor endpoints.
+            amount: 1,
         };
 
         let permit = match crate::security::preflight(&mut inner.security, request) {

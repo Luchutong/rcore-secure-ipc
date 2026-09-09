@@ -11,6 +11,9 @@ pub const MAX_OPEN_FILES: usize = 32;
 /// one readable endpoint and one writable endpoint.
 pub const MAX_OPEN_PIPE_FDS: usize = 16;
 
+/// A successful pipe creation installs one read and one write endpoint.
+const PIPE_ENDPOINTS_PER_PIPE: usize = 2;
+
 /// Per-process IPC resource accounting state.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct QuotaState {
@@ -215,10 +218,13 @@ pub(crate) struct QuotaReservation {
 pub(crate) fn reserve(state: &mut QuotaState, request: &IpcRequest) -> IpcResult<QuotaReservation> {
     match request.operation {
         IpcOperation::PipeCreate => {
-            state.reserve_pipe_fds(request.amount)?;
+            // IpcRequest.amount follows the audit ABI and counts one pipe
+            // creation operation. Quota accounting charges its two concrete
+            // endpoint descriptors independently of that public value.
+            state.reserve_pipe_fds(PIPE_ENDPOINTS_PER_PIPE)?;
             Ok(QuotaReservation {
                 kind: QuotaReservationKind::PipeFds,
-                amount: request.amount,
+                amount: PIPE_ENDPOINTS_PER_PIPE,
             })
         }
         _ => Ok(QuotaReservation {

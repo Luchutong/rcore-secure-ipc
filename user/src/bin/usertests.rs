@@ -27,6 +27,7 @@ static SUCC_TESTS: &[TestCase] = &[
     ("pipetest\0", "\0", "\0", "\0", 0),
     ("run_pipe_test\0", "\0", "\0", "\0", 0),
     ("quota_test\0", "\0", "\0", "\0", 0),
+    ("ipc_audit_integration_test\0", "\0", "\0", "\0", 0),
     ("sleep_simple\0", "\0", "\0", "\0", 0),
     ("sleep\0", "\0", "\0", "\0", 0),
     ("sig_simple\0", "\0", "\0", "\0", 0),
