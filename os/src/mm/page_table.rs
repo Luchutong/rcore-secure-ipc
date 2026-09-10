@@ -237,26 +237,34 @@ pub fn try_translated_byte_buffer(
 
 /// 安全版 `translated_str`：从用户空间加载以 `\0` 结尾的字符串。
 ///
-/// 最多读取 `max_len` 字节；若区间非法、或无终止符，返回 `None`。
+/// 逐页扫描：只要求“实际扫描过的页”已映射、带 `U` 标志、可读，
+/// 一旦遇到 `\0` 立即成功返回；因此字符串很短时不会要求其后的内存也映射。
+/// 若扫描超过 `max_len` 仍无终止符（或中途遇到非法页），返回 `None`。
 pub fn try_translated_str(token: usize, ptr: *const u8, max_len: usize) -> Option<String> {
     let start = ptr as usize;
-    if !check_user_range(token, start, max_len, false) {
+    if start == 0 || max_len == 0 {
+        return None;
+    }
+    // 仅做数值边界检查：扫描上限不得溢出、不得越过用户正区
+    let limit = start.checked_add(max_len)?;
+    if limit > USER_VA_LIMIT {
         return None;
     }
     let page_table = PageTable::from_token(token);
     let mut string = String::new();
     let mut cur = start;
-    let end = start + max_len;
-    while cur < end {
-        // 校验已保证该页映射，unwrap 不会触发
-        let ppn = page_table
-            .translate(VirtAddr::from(cur).floor())
-            .unwrap()
-            .ppn();
+    while cur < limit {
+        // 只校验当前扫描到的这一页：必须映射、带 U 标志、可读
+        let pte = page_table.translate(VirtAddr::from(cur).floor())?;
+        let flags = pte.flags();
+        if !flags.contains(PTEFlags::U) || !flags.contains(PTEFlags::R) {
+            return None;
+        }
+        let ppn = pte.ppn();
         let offset = cur & (PAGE_SIZE - 1);
-        let limit = (PAGE_SIZE - offset).min(end - cur);
+        let chunk = (PAGE_SIZE - offset).min(limit - cur);
         let bytes = ppn.get_bytes_array();
-        let slice = &bytes[offset..offset + limit];
+        let slice = &bytes[offset..offset + chunk];
         match slice.iter().position(|&b| b == 0) {
             Some(z) => {
                 string.extend(slice[..z].iter().map(|&b| b as char));
@@ -264,7 +272,7 @@ pub fn try_translated_str(token: usize, ptr: *const u8, max_len: usize) -> Optio
             }
             None => {
                 string.extend(slice.iter().map(|&b| b as char));
-                cur += limit;
+                cur += chunk;
             }
         }
     }
@@ -293,7 +301,9 @@ pub fn try_translated_ref<T>(token: usize, ptr: *const T) -> Option<&'static T> 
         return None;
     }
     let page_table = PageTable::from_token(token);
-    page_table.translate_va(VirtAddr::from(addr)).map(|pa| pa.get_ref())
+    page_table
+        .translate_va(VirtAddr::from(addr))
+        .map(|pa| pa.get_ref())
 }
 
 /// 安全版 `translated_refmut`：校验后返回对用户内存中 `T` 的可变引用。
@@ -317,65 +327,9 @@ pub fn try_translated_refmut<T>(token: usize, ptr: *mut T) -> Option<&'static mu
         return None;
     }
     let page_table = PageTable::from_token(token);
-    page_table.translate_va(VirtAddr::from(addr)).map(|pa| pa.get_mut())
-}
-
-/// 从用户地址空间翻译一段字节缓冲区为内核可访问的切片集合。
-///
-/// # Safety
-/// 本函数不做任何校验，非法用户指针会导致内核 panic。
-/// 新代码必须使用 [`try_translated_byte_buffer`]，此函数仅保留兼容旧调用。
-pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
-    try_translated_byte_buffer(token, ptr, len, false).unwrap_or_else(|| {
-        panic!(
-            "[kernel] translated_byte_buffer: invalid user range ptr={:#x} len={:#x}",
-            ptr as usize, len
-        )
-    })
-}
-
-/// Load a string from other address spaces into kernel space without an end `\0`.
-///
-/// # Safety
-/// 本函数不做任何校验，非法或无终止符的用户字符串会导致内核 panic。
-/// 新代码必须使用 [`try_translated_str`]，此函数仅保留兼容旧调用。
-pub fn translated_str(token: usize, ptr: *const u8) -> String {
-    try_translated_str(token, ptr, MAX_STR_LEN).unwrap_or_else(|| {
-        panic!(
-            "[kernel] translated_str: invalid or unterminated user string at {:#x}",
-            ptr as usize
-        )
-    })
-}
-
-/// 从用户地址空间翻译一个共享引用。
-///
-/// # Safety
-/// 本函数不做任何校验，非法用户指针会导致内核 panic。
-/// 新代码必须使用 [`try_translated_ref`]，此函数仅保留兼容旧调用。
-pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
-    try_translated_ref(token, ptr).unwrap_or_else(|| {
-        panic!(
-            "[kernel] translated_ref: invalid user reference at {:#x} (size {})",
-            ptr as usize,
-            core::mem::size_of::<T>()
-        )
-    })
-}
-
-/// 从用户地址空间翻译一个可变引用。
-///
-/// # Safety
-/// 本函数不做任何校验，非法用户指针会导致内核 panic。
-/// 新代码必须使用 [`try_translated_refmut`]，此函数仅保留兼容旧调用。
-pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
-    try_translated_refmut(token, ptr).unwrap_or_else(|| {
-        panic!(
-            "[kernel] translated_refmut: invalid user reference at {:#x} (size {})",
-            ptr as usize,
-            core::mem::size_of::<T>()
-        )
-    })
+    page_table
+        .translate_va(VirtAddr::from(addr))
+        .map(|pa| pa.get_mut())
 }
 
 pub struct UserBuffer {

@@ -1,7 +1,6 @@
 use crate::fs::{OpenFlags, make_pipe, open_file};
 use crate::mm::{
-    MAX_STR_LEN, UserBuffer, try_translated_byte_buffer, try_translated_refmut,
-    try_translated_str,
+    MAX_STR_LEN, UserBuffer, try_translated_byte_buffer, try_translated_refmut, try_translated_str,
 };
 use crate::task::{current_task, current_user_token};
 use alloc::sync::Arc;

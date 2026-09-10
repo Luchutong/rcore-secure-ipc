@@ -106,8 +106,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
     });
     if let Some((idx, _)) = pair {
         // 先校验退出码指针：非法地址返回 -1，且不移动 children 列表，调用方可重试
-        let Some(exit_code_slot) =
-            try_translated_refmut(inner.memory_set.token(), exit_code_ptr)
+        let Some(exit_code_slot) = try_translated_refmut(inner.memory_set.token(), exit_code_ptr)
         else {
             return -1;
         };
