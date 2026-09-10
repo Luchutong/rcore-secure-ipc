@@ -12,8 +12,9 @@ pub use memory_set::remap_test;
 pub use memory_set::{KERNEL_SPACE, MapPermission, MemorySet, kernel_token};
 use page_table::PTEFlags;
 pub use page_table::{
-    PageTable, PageTableEntry, UserBuffer, translated_byte_buffer, translated_ref,
-    translated_refmut, translated_str,
+    MAX_ARGV, MAX_STR_LEN, PageTable, PageTableEntry, UserBuffer, check_user_range,
+    translated_byte_buffer, translated_ref, translated_refmut, translated_str,
+    try_translated_byte_buffer, try_translated_ref, try_translated_refmut, try_translated_str,
 };
 pub use user_access::{copy_from_user, copy_to_user};
 
