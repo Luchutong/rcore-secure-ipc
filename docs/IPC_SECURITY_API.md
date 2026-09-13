@@ -91,13 +91,19 @@ pub type IpcResult<T> = Result<T, IpcError>;
 ## 4. 门面接口草案
 
 ```rust
-pub fn preflight(request: &IpcRequest) -> IpcResult<IpcPermit>;
+pub fn preflight(
+    state: &mut ProcessSecurityState,
+    request: IpcRequest,
+) -> IpcResult<IpcPermit>;
 
 pub fn complete(
+    state: &mut ProcessSecurityState,
     permit: IpcPermit,
     outcome: IpcResult<usize>,
 ) -> IpcResult<usize>;
 ```
+
+`state` 必须是当前调用进程的 `ProcessSecurityState`。配额模块通过该状态维护每进程资源计数，不得通过全局表重复保存进程配额。
 
 `preflight` 必须：
 
