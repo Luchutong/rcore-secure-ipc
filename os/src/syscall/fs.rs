@@ -1,5 +1,5 @@
 use crate::fs::{OpenFlags, make_pipe, open_file};
-use crate::mm::{UserBuffer, translated_byte_buffer, translated_str};
+use crate::mm::{MAX_STR_LEN, UserBuffer, try_translated_byte_buffer, try_translated_str};
 use crate::task::{current_task, current_user_token};
 use alloc::sync::Arc;
 
@@ -17,7 +17,11 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
         let file = file.clone();
         // release current task TCB manually to avoid multi-borrow
         drop(inner);
-        file.write(UserBuffer::new(translated_byte_buffer(token, buf, len))) as isize
+        // 内核从用户缓冲区读取数据：要求用户页可读
+        let Some(buffers) = try_translated_byte_buffer(token, buf, len, false) else {
+            return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+        };
+        file.write(UserBuffer::new(buffers)) as isize
     } else {
         -1
     }
@@ -37,7 +41,11 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
         }
         // release current task TCB manually to avoid multi-borrow
         drop(inner);
-        file.read(UserBuffer::new(translated_byte_buffer(token, buf, len))) as isize
+        // 内核向用户缓冲区写入数据：要求用户页可写
+        let Some(buffers) = try_translated_byte_buffer(token, buf, len, true) else {
+            return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+        };
+        file.read(UserBuffer::new(buffers)) as isize
     } else {
         -1
     }
@@ -58,9 +66,15 @@ fn ipc_error_to_ret(error: crate::security::IpcError) -> isize {
 pub fn sys_open(path: *const u8, flags: u32) -> isize {
     let task = current_task().unwrap();
     let token = current_user_token();
-    let path = translated_str(token, path);
-
-    if let Some(inode) = open_file(path.as_str(), OpenFlags::from_bits(flags).unwrap()) {
+    // 校验路径字符串：非法指针或超长返回 EFAULT，不 panic。
+    let Some(path) = try_translated_str(token, path, MAX_STR_LEN) else {
+        return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+    };
+    // 校验用户传入的打开标志：非法位组合返回 EINVAL，不 panic。
+    let Some(open_flags) = OpenFlags::from_bits(flags) else {
+        return ipc_error_to_ret(crate::security::IpcError::InvalidArgument);
+    };
+    if let Some(inode) = open_file(path.as_str(), open_flags) {
         let mut inner = task.inner_exclusive_access();
 
         if let Err(error) = crate::security::reserve_file_fd(&mut inner.security) {

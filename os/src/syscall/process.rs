@@ -1,5 +1,5 @@
 use crate::fs::{OpenFlags, open_file};
-use crate::mm::{translated_ref, translated_refmut, translated_str};
+use crate::mm::{MAX_ARGV, MAX_STR_LEN, copy_from_user, copy_to_user, try_translated_str};
 use crate::task::{
     MAX_SIG, SignalAction, SignalFlags, add_task, current_task, current_user_token,
     exit_current_and_run_next, pid2task, suspend_current_and_run_next,
@@ -43,17 +43,28 @@ pub fn sys_fork() -> isize {
 
 pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
     let token = current_user_token();
-    let path = translated_str(token, path);
+    // 校验路径字符串：非法指针或超长返回 -1
+    let Some(path) = try_translated_str(token, path, MAX_STR_LEN) else {
+        return -14;
+    };
     let mut args_vec: Vec<String> = Vec::new();
     loop {
-        let arg_str_ptr = *translated_ref(token, args);
+        // 逐项校验参数指针：非法地址返回 -1，不 panic
+        let Ok(arg_str_ptr) = copy_from_user(token, args) else {
+            return -14;
+        };
         if arg_str_ptr == 0 {
             break;
         }
-        args_vec.push(translated_str(token, arg_str_ptr as *const u8));
-        unsafe {
-            args = args.add(1);
+        // 限制参数个数，防止未以 0 结尾的 argv 数组导致无限遍历
+        if args_vec.len() >= MAX_ARGV {
+            return -1;
         }
+        let Some(arg) = try_translated_str(token, arg_str_ptr as *const u8, MAX_STR_LEN) else {
+            return -14;
+        };
+        args_vec.push(arg);
+        args = args.wrapping_add(1);
     }
     if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
         let all_data = app_inode.read_all();
@@ -89,14 +100,18 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         // ++++ release child PCB
     });
     if let Some((idx, _)) = pair {
-        let child = inner.children.remove(idx);
-        // confirm that child will be deallocated after being removed from children list
-        assert_eq!(Arc::strong_count(&child), 1);
+        let child = &inner.children[idx];
         let found_pid = child.getpid();
         // ++++ temporarily access child PCB exclusively
         let exit_code = child.inner_exclusive_access().exit_code;
         // ++++ release child PCB
-        *translated_refmut(inner.memory_set.token(), exit_code_ptr) = exit_code;
+        // 先复制退出码：非法地址返回 EFAULT，且不移动 children 列表，调用方可重试。
+        if copy_to_user(inner.memory_set.token(), exit_code_ptr, &exit_code).is_err() {
+            return -14;
+        }
+        let child = inner.children.remove(idx);
+        // confirm that child will be deallocated after being removed from children list
+        assert_eq!(Arc::strong_count(&child), 1);
         found_pid as isize
     } else {
         -2
@@ -181,8 +196,14 @@ pub fn sys_sigaction(
             return -1;
         }
         let prev_action = inner.signal_actions.table[signum as usize];
-        *translated_refmut(token, old_action) = prev_action;
-        inner.signal_actions.table[signum as usize] = *translated_ref(token, action);
+        // 复制输入后再写回旧动作；任一地址非法都返回 EFAULT，不修改内核动作表。
+        let Ok(new_action) = copy_from_user(token, action) else {
+            return -14;
+        };
+        if copy_to_user(token, old_action, &prev_action).is_err() {
+            return -14;
+        }
+        inner.signal_actions.table[signum as usize] = new_action;
         0
     } else {
         -1
