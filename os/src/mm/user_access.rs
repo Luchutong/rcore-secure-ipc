@@ -5,11 +5,11 @@
 
 use core::mem::{MaybeUninit, size_of};
 
-use super::try_translated_byte_buffer;
+use super::{UserBuffer, try_translated_byte_buffer};
 use crate::security::{IpcError, IpcResult};
 
 /// Copy a plain value from user memory.
-pub fn copy_from_user<T: Copy + 'static>(token: usize, src: *const T) -> IpcResult<T> {
+pub fn copy_from_user<T: Copy>(token: usize, src: *const T) -> IpcResult<T> {
     let size = size_of::<T>();
     if size == 0 {
         return Err(IpcError::InvalidArgument);
@@ -31,7 +31,7 @@ pub fn copy_from_user<T: Copy + 'static>(token: usize, src: *const T) -> IpcResu
 }
 
 /// Copy a plain value to user memory.
-pub fn copy_to_user<T: Copy + 'static>(token: usize, dst: *mut T, value: &T) -> IpcResult<()> {
+pub fn copy_to_user<T: Copy>(token: usize, dst: *mut T, value: &T) -> IpcResult<()> {
     let size = size_of::<T>();
     if size == 0 {
         return Err(IpcError::InvalidArgument);
@@ -48,4 +48,11 @@ pub fn copy_to_user<T: Copy + 'static>(token: usize, dst: *mut T, value: &T) -> 
     }
     debug_assert_eq!(offset, size);
     Ok(())
+}
+
+/// Validate bytes that the kernel will read and return a page-segmented buffer.
+pub fn copy_bytes_from_user(token: usize, src: *const u8, len: usize) -> IpcResult<UserBuffer> {
+    let buffers =
+        try_translated_byte_buffer(token, src, len, false).ok_or(IpcError::InvalidAddress)?;
+    Ok(UserBuffer::new(buffers))
 }

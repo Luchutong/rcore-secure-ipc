@@ -1,5 +1,7 @@
 use crate::fs::{OpenFlags, make_pipe, open_file};
-use crate::mm::{MAX_STR_LEN, UserBuffer, try_translated_byte_buffer, try_translated_str};
+use crate::mm::{
+    MAX_STR_LEN, UserBuffer, copy_bytes_from_user, try_translated_byte_buffer, try_translated_str,
+};
 use crate::task::{current_task, current_user_token};
 use alloc::sync::Arc;
 
@@ -33,17 +35,20 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     drop(inner);
 
     // B+C+D order: validate user memory, authorize, perform I/O, then audit outcome.
-    let Some(buffers) = try_translated_byte_buffer(token, buf, len, false) else {
-        if let Some(request) = &request {
-            crate::security::record_failure(request, crate::security::IpcError::InvalidAddress);
+    let user_buffer = match copy_bytes_from_user(token, buf, len) {
+        Ok(buffer) => buffer,
+        Err(error) => {
+            if let Some(request) = &request {
+                crate::security::record_failure(request, error);
+            }
+            return ipc_error_to_ret(error);
         }
-        return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
     };
     let Some(request) = request else {
         return if len == 0 {
             0
         } else {
-            file.write(UserBuffer::new(buffers)) as isize
+            file.write(user_buffer) as isize
         };
     };
     let permit = {
@@ -53,11 +58,7 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
             Err(error) => return ipc_error_to_ret(error),
         }
     };
-    let written = if len == 0 {
-        0
-    } else {
-        file.write(UserBuffer::new(buffers))
-    };
+    let written = if len == 0 { 0 } else { file.write(user_buffer) };
     let mut inner = task.inner_exclusive_access();
     match crate::security::complete(&mut inner.security, permit, Ok(written)) {
         Ok(value) => value as isize,

@@ -8,6 +8,7 @@ extern crate user_lib;
 
 use core::arch::asm;
 use core::mem::size_of;
+use core::ptr::addr_of_mut;
 use user_lib::audit::{
     self, AUDIT_OP_AUDIT_READ, AUDIT_OP_IPC_STAT, AUDIT_OP_PIPE_CREATE, AUDIT_OP_PIPE_READ,
     AUDIT_OP_PIPE_WRITE, AuditRecordV1, EFAULT, ENOSPC, IpcStatsV1,
@@ -18,6 +19,11 @@ const PIPE_LIMIT: usize = 8;
 const SYSCALL_PIPE: usize = 59;
 const SYSCALL_READ: usize = 63;
 const SYSCALL_WRITE: usize = 64;
+
+#[repr(C, align(4096))]
+struct TwoUserPages([u8; 8192]);
+
+static mut CROSS_PAGE_OUTPUT: TwoUserPages = TwoUserPages([0; 8192]);
 
 fn raw_syscall(id: usize, args: [usize; 3]) -> isize {
     let mut result: isize;
@@ -217,12 +223,28 @@ fn test_pipe_read_write_events() {
     assert_eq!(close(pair[1]), 0);
 }
 
+fn test_cross_page_unaligned_audit_output() {
+    // 输出从第一页末尾前39字节开始，80字节结构横跨两页且未自然对齐。
+    let base = unsafe { addr_of_mut!(CROSS_PAGE_OUTPUT.0).cast::<u8>() };
+    let output = unsafe { base.add(4096 - 39).cast::<IpcStatsV1>() };
+    assert_ne!((output as usize) % core::mem::align_of::<IpcStatsV1>(), 0);
+    assert_eq!(
+        unsafe { audit::raw::ipc_stat(output, size_of::<IpcStatsV1>(), 0) },
+        0
+    );
+    let copied = unsafe { output.read_unaligned() };
+    assert_eq!(copied.abi_version, audit::AUDIT_ABI_VERSION);
+    assert_eq!(copied.struct_size, audit::IPC_STATS_V1_SIZE);
+    assert_eq!(copied.capacity, 256);
+}
+
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     test_successful_pipe_event();
     test_quota_denial_event_and_recovery();
     test_user_copy_failures_are_audited_and_rolled_back();
     test_pipe_read_write_events();
+    test_cross_page_unaligned_audit_output();
     println!("ipc_audit_integration_test passed!");
     0
 }

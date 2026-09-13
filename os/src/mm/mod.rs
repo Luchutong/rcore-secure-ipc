@@ -15,7 +15,7 @@ pub use page_table::{
     MAX_ARGV, MAX_STR_LEN, PageTable, PageTableEntry, UserBuffer, check_user_range,
     try_translated_byte_buffer, try_translated_ref, try_translated_refmut, try_translated_str,
 };
-pub use user_access::{copy_from_user, copy_to_user};
+pub use user_access::{copy_bytes_from_user, copy_from_user, copy_to_user};
 
 pub fn init() {
     heap_allocator::init_heap();
