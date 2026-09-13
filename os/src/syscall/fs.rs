@@ -10,20 +10,58 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     if fd >= inner.fd_table.len() {
         return -1;
     }
-    if let Some(file) = &inner.fd_table[fd] {
-        if !file.writable() {
-            return -1;
+    let Some(file) = &inner.fd_table[fd] else {
+        return -1;
+    };
+    if !file.writable() {
+        return -1;
+    }
+    let file = file.clone();
+    let request = file.ipc_object().map(|object| {
+        let credentials = inner.security.credentials;
+        crate::security::IpcRequest {
+            subject: crate::security::IpcSubject {
+                pid: task.getpid(),
+                uid: credentials.uid,
+                capabilities: credentials.capabilities,
+            },
+            object,
+            operation: crate::security::IpcOperation::PipeWrite,
+            amount: len,
         }
-        let file = file.clone();
-        // release current task TCB manually to avoid multi-borrow
-        drop(inner);
-        // 内核从用户缓冲区读取数据：要求用户页可读
-        let Some(buffers) = try_translated_byte_buffer(token, buf, len, false) else {
-            return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+    });
+    drop(inner);
+
+    // B+C+D order: validate user memory, authorize, perform I/O, then audit outcome.
+    let Some(buffers) = try_translated_byte_buffer(token, buf, len, false) else {
+        if let Some(request) = &request {
+            crate::security::record_failure(request, crate::security::IpcError::InvalidAddress);
+        }
+        return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+    };
+    let Some(request) = request else {
+        return if len == 0 {
+            0
+        } else {
+            file.write(UserBuffer::new(buffers)) as isize
         };
-        file.write(UserBuffer::new(buffers)) as isize
+    };
+    let permit = {
+        let mut inner = task.inner_exclusive_access();
+        match crate::security::preflight(&mut inner.security, request) {
+            Ok(permit) => permit,
+            Err(error) => return ipc_error_to_ret(error),
+        }
+    };
+    let written = if len == 0 {
+        0
     } else {
-        -1
+        file.write(UserBuffer::new(buffers))
+    };
+    let mut inner = task.inner_exclusive_access();
+    match crate::security::complete(&mut inner.security, permit, Ok(written)) {
+        Ok(value) => value as isize,
+        Err(error) => ipc_error_to_ret(error),
     }
 }
 
@@ -34,20 +72,57 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
     if fd >= inner.fd_table.len() {
         return -1;
     }
-    if let Some(file) = &inner.fd_table[fd] {
-        let file = file.clone();
-        if !file.readable() {
-            return -1;
+    let Some(file) = &inner.fd_table[fd] else {
+        return -1;
+    };
+    let file = file.clone();
+    if !file.readable() {
+        return -1;
+    }
+    let request = file.ipc_object().map(|object| {
+        let credentials = inner.security.credentials;
+        crate::security::IpcRequest {
+            subject: crate::security::IpcSubject {
+                pid: task.getpid(),
+                uid: credentials.uid,
+                capabilities: credentials.capabilities,
+            },
+            object,
+            operation: crate::security::IpcOperation::PipeRead,
+            amount: len,
         }
-        // release current task TCB manually to avoid multi-borrow
-        drop(inner);
-        // 内核向用户缓冲区写入数据：要求用户页可写
-        let Some(buffers) = try_translated_byte_buffer(token, buf, len, true) else {
-            return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+    });
+    drop(inner);
+
+    let Some(buffers) = try_translated_byte_buffer(token, buf, len, true) else {
+        if let Some(request) = &request {
+            crate::security::record_failure(request, crate::security::IpcError::InvalidAddress);
+        }
+        return ipc_error_to_ret(crate::security::IpcError::InvalidAddress);
+    };
+    let Some(request) = request else {
+        return if len == 0 {
+            0
+        } else {
+            file.read(UserBuffer::new(buffers)) as isize
         };
-        file.read(UserBuffer::new(buffers)) as isize
+    };
+    let permit = {
+        let mut inner = task.inner_exclusive_access();
+        match crate::security::preflight(&mut inner.security, request) {
+            Ok(permit) => permit,
+            Err(error) => return ipc_error_to_ret(error),
+        }
+    };
+    let read = if len == 0 {
+        0
     } else {
-        -1
+        file.read(UserBuffer::new(buffers))
+    };
+    let mut inner = task.inner_exclusive_access();
+    match crate::security::complete(&mut inner.security, permit, Ok(read)) {
+        Ok(value) => value as isize,
+        Err(error) => ipc_error_to_ret(error),
     }
 }
 
@@ -140,7 +215,15 @@ pub fn sys_pipe(pipe: *mut usize) -> isize {
             Err(error) => return ipc_error_to_ret(error),
         };
 
-        let (pipe_read, pipe_write) = make_pipe();
+        let (pipe_read, pipe_write) = match make_pipe(credentials.uid) {
+            Ok(pipe) => pipe,
+            Err(error) => {
+                return match crate::security::complete(&mut inner.security, permit, Err(error)) {
+                    Ok(value) => value as isize,
+                    Err(error) => ipc_error_to_ret(error),
+                };
+            }
+        };
 
         let read_fd = inner.alloc_fd();
         inner.fd_table[read_fd] = Some(pipe_read);

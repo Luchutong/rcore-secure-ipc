@@ -9,26 +9,32 @@ extern crate user_lib;
 use core::arch::asm;
 use core::mem::size_of;
 use user_lib::audit::{
-    self, AUDIT_OP_AUDIT_READ, AUDIT_OP_IPC_STAT, AUDIT_OP_PIPE_CREATE, AuditRecordV1, EFAULT,
-    ENOSPC, IpcStatsV1,
+    self, AUDIT_OP_AUDIT_READ, AUDIT_OP_IPC_STAT, AUDIT_OP_PIPE_CREATE, AUDIT_OP_PIPE_READ,
+    AUDIT_OP_PIPE_WRITE, AuditRecordV1, EFAULT, ENOSPC, IpcStatsV1,
 };
-use user_lib::{close, getpid, pipe};
+use user_lib::{close, getpid, pipe, read, write};
 
 const PIPE_LIMIT: usize = 8;
 const SYSCALL_PIPE: usize = 59;
+const SYSCALL_READ: usize = 63;
+const SYSCALL_WRITE: usize = 64;
 
-fn raw_pipe(output: usize) -> isize {
+fn raw_syscall(id: usize, args: [usize; 3]) -> isize {
     let mut result: isize;
     unsafe {
         asm!(
             "ecall",
-            inlateout("x10") output => result,
-            in("x11") 0,
-            in("x12") 0,
-            in("x17") SYSCALL_PIPE,
+            inlateout("x10") args[0] => result,
+            in("x11") args[1],
+            in("x12") args[2],
+            in("x17") id,
         );
     }
     result
+}
+
+fn raw_pipe(output: usize) -> isize {
+    raw_syscall(SYSCALL_PIPE, [output, 0, 0])
 }
 
 fn stats() -> IpcStatsV1 {
@@ -163,11 +169,60 @@ fn test_user_copy_failures_are_audited_and_rolled_back() {
     assert_eq!(records[0].errno, EFAULT);
 }
 
+fn test_pipe_read_write_events() {
+    let before = stats();
+    let cursor = before.next_sequence - 1;
+    let mut pair = [0usize; 2];
+    assert_eq!(pipe(&mut pair), 0);
+
+    let payload = *b"ipc42";
+    let mut output = [0u8; 5];
+    assert_eq!(write(pair[1], &payload), payload.len() as isize);
+    assert_eq!(read(pair[0], &mut output), output.len() as isize);
+    assert_eq!(output, payload);
+    assert_eq!(write(pair[1], &[]), 0);
+    assert_eq!(read(pair[0], &mut []), 0);
+    assert_eq!(
+        raw_syscall(SYSCALL_WRITE, [pair[1], 0x8020_0000, 5]),
+        -(EFAULT as isize)
+    );
+    assert_eq!(
+        raw_syscall(SYSCALL_READ, [pair[0], 0x8020_0000, 5]),
+        -(EFAULT as isize)
+    );
+
+    let mut records = [AuditRecordV1::default(); 8];
+    assert_eq!(read_since(cursor, &mut records), 7);
+    assert_pipe_event(&records[0], true);
+    let object_id = records[1].object_id;
+    assert_ne!(object_id, 0);
+    for (index, operation, requested, result, errno) in [
+        (1, AUDIT_OP_PIPE_WRITE, 5, 5, 0),
+        (2, AUDIT_OP_PIPE_READ, 5, 5, 0),
+        (3, AUDIT_OP_PIPE_WRITE, 0, 0, 0),
+        (4, AUDIT_OP_PIPE_READ, 0, 0, 0),
+        (5, AUDIT_OP_PIPE_WRITE, 5, 0, EFAULT),
+        (6, AUDIT_OP_PIPE_READ, 5, 0, EFAULT),
+    ] {
+        let record = &records[index];
+        assert_eq!(record.operation, operation);
+        assert_eq!(record.object_id, object_id);
+        assert_eq!(record.object_owner_uid, 0);
+        assert_eq!(record.requested_amount, requested);
+        assert_eq!(record.result_value, result);
+        assert_eq!(record.errno, errno);
+    }
+
+    assert_eq!(close(pair[0]), 0);
+    assert_eq!(close(pair[1]), 0);
+}
+
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     test_successful_pipe_event();
     test_quota_denial_event_and_recovery();
     test_user_copy_failures_are_audited_and_rolled_back();
+    test_pipe_read_write_events();
     println!("ipc_audit_integration_test passed!");
     0
 }

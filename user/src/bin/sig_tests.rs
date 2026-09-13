@@ -97,7 +97,8 @@ fn user_sig_test_restore() {
 
 fn kernel_sig_test_ignore() {
     sigprocmask(SignalFlags::SIGSTOP.bits() as u32);
-    if kill(getpid() as usize, SignalFlags::SIGSTOP.bits()) < 0 {
+    // kill 接收信号编号，不接收 SignalFlags 位掩码。
+    if kill(getpid() as usize, SIGSTOP) < 0 {
         println!("kill faild\n");
         exit(-1);
     }

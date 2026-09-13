@@ -75,6 +75,12 @@ pub fn complete(
     audit::record(&permit.request, &outcome);
     outcome
 }
+
+/// Record a request rejected before a permit can be issued (for example EFAULT
+/// found while validating a pipe buffer). No quota reservation is involved.
+pub fn record_failure(request: &IpcRequest, error: IpcError) {
+    audit::record(request, &Err(error));
+}
 /// Reserve one ordinary file-descriptor slot.
 ///
 /// This crate-private hook keeps syscall code outside the quota module.
