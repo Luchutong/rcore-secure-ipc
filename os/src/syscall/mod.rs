@@ -15,6 +15,8 @@ const SYSCALL_GETPID: usize = 172;
 const SYSCALL_FORK: usize = 220;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_WAITPID: usize = 260;
+const SYSCALL_GETUID: usize = 600;
+const SYSCALL_SETUID: usize = 601;
 const SYSCALL_AUDIT_READ: usize = 602;
 const SYSCALL_IPC_STAT: usize = 603;
 
@@ -52,6 +54,8 @@ pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_FORK => sys_fork(),
         SYSCALL_EXEC => sys_exec(args[0] as *const u8, args[1] as *const usize),
         SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),
+        SYSCALL_GETUID => sys_getuid(),
+        SYSCALL_SETUID => sys_setuid(args[0]),
         SYSCALL_AUDIT_READ => {
             sys_audit_read(args[0] as *mut AuditRecordV1, args[1], args[2] as u64)
         }

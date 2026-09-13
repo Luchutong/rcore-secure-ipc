@@ -20,6 +20,8 @@ const SYSCALL_GETPID: usize = 172;
 const SYSCALL_FORK: usize = 220;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_WAITPID: usize = 260;
+const SYSCALL_GETUID: usize = 600;
+const SYSCALL_SETUID: usize = 601;
 const SYSCALL_AUDIT_READ: usize = 602;
 const SYSCALL_IPC_STAT: usize = 603;
 
@@ -127,6 +129,14 @@ pub fn sys_sigprocmask(mask: u32) -> isize {
 
 pub fn sys_sigreturn() -> isize {
     syscall(SYSCALL_SIGRETURN, [0, 0, 0])
+}
+
+pub fn sys_getuid() -> isize {
+    syscall(SYSCALL_GETUID, [0, 0, 0])
+}
+
+pub fn sys_setuid(uid: usize) -> isize {
+    syscall(SYSCALL_SETUID, [uid, 0, 0])
 }
 
 pub(crate) fn sys_audit_read(
