@@ -14,9 +14,11 @@
 
 ## 当前状态
 
-项目处于并行实现与预集成阶段。仓库包含 rCore 第七章教学内核源码、已冻结的安全接口、
-各角色功能分支，以及可重复执行的审计回归、压力与性能测试。
+项目已完成 A/B/C/D 四个安全模块的联合集成与稳定版验收。集成成果于 2026-09-14
+通过最终 PR 合入 `main`；合并后的 QEMU 用户测试、Rust 文档构建和文档发布任务均成功。
+`main` 现作为项目最终成果分支，`integration` 保留为阶段性集成记录。
 
+- [最终验收与发布记录](docs/FINAL_ACCEPTANCE.md)
 - [四人协作开发计划](docs/ROADMAP.md)
 - [团队分工与开发规范](docs/TEAM_COLLABORATION.md)
 - [IPC Security API v1](docs/IPC_SECURITY_API.md)
