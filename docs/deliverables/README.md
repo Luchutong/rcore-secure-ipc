@@ -25,7 +25,8 @@ git worktree add ../rcore-secure-ipc-deliverables origin/deliverables/final-kit
 | 用户态测试程序说明 | [USER_TEST_PROGRAMS.md](USER_TEST_PROGRAMS.md) | 说明测试入口、覆盖点、运行命令和预期输出 |
 | 完整课程设计报告草稿 | [COURSE_REPORT.md](COURSE_REPORT.md) / [可编辑 DOCX](generated/rcore-secure-ipc-course-report-draft.docx) | 可直接套用学校 Word 模板继续排版 |
 | 截图与日志操作手册 | [SCREENSHOT_AND_LOG_GUIDE.md](SCREENSHOT_AND_LOG_GUIDE.md) | 统一截图、命名、图注、日志和复现实验方法 |
-| 答辩 PPT 逐页材料 | [DEFENSE_PPT.md](DEFENSE_PPT.md) | 供组员制作 PPT；10 页、5 分钟，含每页讲稿和配图 |
+| 答辩 PPT 正式方案 | [DEFENSE_PPT_10MIN_4PERSON.md](DEFENSE_PPT_10MIN_4PERSON.md) | 12 页、约 10 分钟；D 主讲统筹，A/B/C 分模块接力 |
+| 答辩 PPT 压缩备用 | [DEFENSE_PPT.md](DEFENSE_PPT.md) | 现场临时限时 5 分钟时使用，不与正式稿混讲 |
 | 最终交付检查表 | [FINAL_CHECKLIST.md](FINAL_CHECKLIST.md) | 汇总前的逐项验收和文件命名规则 |
 | 原始日志 | [logs/](logs/) | CI、宿主测试、独立安全程序和性能原始输出 |
 | 论文式图片 | [figures/](figures/) | 同时提供 SVG 与 1600×900 PNG |
