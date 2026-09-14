@@ -1,7 +1,9 @@
 use super::File;
 use crate::mm::UserBuffer;
+use crate::security::{IpcError, IpcObject, IpcResult, ResourceId, Uid};
 use crate::sync::UPSafeCell;
 use alloc::sync::{Arc, Weak};
+use lazy_static::lazy_static;
 
 use crate::task::suspend_current_and_run_next;
 
@@ -9,21 +11,30 @@ pub struct Pipe {
     readable: bool,
     writable: bool,
     buffer: Arc<UPSafeCell<PipeRingBuffer>>,
+    object: IpcObject,
 }
 
 impl Pipe {
-    pub fn read_end_with_buffer(buffer: Arc<UPSafeCell<PipeRingBuffer>>) -> Self {
+    pub fn read_end_with_buffer(
+        buffer: Arc<UPSafeCell<PipeRingBuffer>>,
+        object: IpcObject,
+    ) -> Self {
         Self {
             readable: true,
             writable: false,
             buffer,
+            object,
         }
     }
-    pub fn write_end_with_buffer(buffer: Arc<UPSafeCell<PipeRingBuffer>>) -> Self {
+    pub fn write_end_with_buffer(
+        buffer: Arc<UPSafeCell<PipeRingBuffer>>,
+        object: IpcObject,
+    ) -> Self {
         Self {
             readable: false,
             writable: true,
             buffer,
+            object,
         }
     }
 }
@@ -96,13 +107,29 @@ impl PipeRingBuffer {
     }
 }
 
-/// Return (read_end, write_end)
-pub fn make_pipe() -> (Arc<Pipe>, Arc<Pipe>) {
+lazy_static! {
+    /// Stable, monotonically increasing pipe IDs; kernel addresses never enter audit records.
+    static ref NEXT_PIPE_ID: UPSafeCell<ResourceId> = unsafe { UPSafeCell::new(1) };
+}
+
+fn allocate_pipe_id() -> IpcResult<ResourceId> {
+    let mut next = NEXT_PIPE_ID.exclusive_access();
+    let id = *next;
+    *next = id.checked_add(1).ok_or(IpcError::ResourceExhausted)?;
+    Ok(id)
+}
+
+/// Return (read_end, write_end) with shared stable audit metadata.
+pub fn make_pipe(owner_uid: Uid) -> IpcResult<(Arc<Pipe>, Arc<Pipe>)> {
+    let object = IpcObject {
+        id: allocate_pipe_id()?,
+        owner_uid,
+    };
     let buffer = Arc::new(unsafe { UPSafeCell::new(PipeRingBuffer::new()) });
-    let read_end = Arc::new(Pipe::read_end_with_buffer(buffer.clone()));
-    let write_end = Arc::new(Pipe::write_end_with_buffer(buffer.clone()));
+    let read_end = Arc::new(Pipe::read_end_with_buffer(buffer.clone(), object));
+    let write_end = Arc::new(Pipe::write_end_with_buffer(buffer.clone(), object));
     buffer.exclusive_access().set_write_end(&write_end);
-    (read_end, write_end)
+    Ok((read_end, write_end))
 }
 
 impl File for Pipe {
@@ -111,6 +138,9 @@ impl File for Pipe {
     }
     fn writable(&self) -> bool {
         self.writable
+    }
+    fn ipc_object(&self) -> Option<IpcObject> {
+        Some(self.object)
     }
     fn read(&self, buf: UserBuffer) -> usize {
         assert!(self.readable());

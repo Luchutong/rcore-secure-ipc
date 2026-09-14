@@ -44,7 +44,6 @@ main                         仅保存通过全部验收的稳定版本
 
 - `os/src/security/credentials.rs`
 - `os/src/security/policy.rs`
-- `os/src/task/task.rs`
 - `os/src/syscall/process.rs`
 
 交付内容：
@@ -65,8 +64,7 @@ main                         仅保存通过全部验收的稳定版本
 
 - `os/src/mm/user_access.rs`
 - `os/src/mm/page_table.rs`
-- `os/src/syscall/fs.rs`
-- `os/src/syscall/process.rs`
+- `user/src/bin/` 下的用户地址攻击测试
 
 交付内容：
 
@@ -86,7 +84,6 @@ main                         仅保存通过全部验收的稳定版本
 
 - `os/src/security/quota.rs`
 - `os/src/fs/pipe.rs`
-- `os/src/task/task.rs`
 - `os/src/syscall/fs.rs`
 
 交付内容：
@@ -150,6 +147,17 @@ os/src/mm/
 ```
 
 模块之间只能通过 `api.rs` 中的类型通信，禁止出现 `policy` 直接访问 `audit` 内部缓冲区等横向依赖。
+
+公共骨架已经在创建功能分支前写入 `integration`。以下文件视为冻结的集成文件，功能分支不得直接修改：
+
+- `os/src/security/api.rs`
+- `os/src/security/mod.rs`
+- `os/src/main.rs`
+- `os/src/mm/mod.rs`
+- `os/src/task/task.rs` 中的 `ProcessSecurityState` 接入点
+- `os/src/syscall/mod.rs` 中按 API 文档预留的系统调用编号
+
+开发者 B 只实现 `mm::user_access` 的安全语义；A、C 在各自拥有的系统调用文件中调用稳定复制接口，因此 B 不需要同时修改 `fs.rs` 或 `process.rs`。凭据和配额状态均已预留在 `ProcessSecurityState` 中，A、C 不再同时修改任务控制块。
 
 ## 5. 三周时间表
 

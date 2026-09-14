@@ -27,6 +27,7 @@ mod lang_items;
 mod logging;
 mod mm;
 mod sbi;
+mod security;
 mod sync;
 mod syscall;
 mod task;

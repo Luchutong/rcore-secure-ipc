@@ -1,8 +1,25 @@
 use super::{FrameTracker, PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum, frame_alloc};
+use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
+
+/// 用户字符串（路径/命令行参数）的最大长度。
+///
+/// 防止恶意应用传入无 `\0` 终止的字符串，导致内核逐字节翻译时无限循环。
+pub const MAX_STR_LEN: usize = 0x10000;
+
+/// `exec` 参数指针数组的最大项数。
+///
+/// 防止参数数组未以 0 结尾时内核无限遍历用户内存。
+pub const MAX_ARGV: usize = 64;
+
+/// SV39 用户虚拟地址空间正区上限（2^38）。
+///
+/// 用户指针及其覆盖区间必须严格位于 `[0, USER_VA_LIMIT)` 内，
+/// 超出该范围的地址（内核区、trampoline、trap context 等）一律拒绝。
+const USER_VA_LIMIT: usize = 1 << 38;
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -137,7 +154,66 @@ impl PageTable {
     }
 }
 
-pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+/// 校验用户提供的地址区间 `[ptr, ptr + len)` 是否安全可访问。
+///
+/// 通过要求：
+/// 1. `ptr + len` 不产生 usize 溢出，且整个区间落在用户正区 `[0, USER_VA_LIMIT)` 内；
+/// 2. 区间覆盖的每一页在当前用户页表中均已映射；
+/// 3. 每一页的 PTE 均带 `U` 标志（拒绝内核页 / trap context / trampoline）；
+/// 4. 每一页的权限满足访问意图（`write == true` 要求 `W`，否则要求 `R`）。
+///
+/// 返回 `false` 表示该区间不可访问，调用方应拒绝本次访问（如返回 -1），
+/// 绝不能继续解引用。
+pub fn check_user_range(token: usize, ptr: usize, len: usize, write: bool) -> bool {
+    if len == 0 {
+        return true;
+    }
+    let Some(end) = ptr.checked_add(len) else {
+        return false;
+    };
+    if ptr >= USER_VA_LIMIT || end > USER_VA_LIMIT {
+        return false;
+    }
+    let page_table = PageTable::from_token(token);
+    let mut cur = ptr;
+    while cur < end {
+        let pte = match page_table.translate(VirtAddr::from(cur).floor()) {
+            Some(pte) => pte,
+            None => return false,
+        };
+        let flags = pte.flags();
+        if !flags.contains(PTEFlags::U) {
+            return false;
+        }
+        if write {
+            if !flags.contains(PTEFlags::W) {
+                return false;
+            }
+        } else if !flags.contains(PTEFlags::R) {
+            return false;
+        }
+        // 跳到下一页边界（或区间终点）
+        let page_end = (cur & !(PAGE_SIZE - 1)) + PAGE_SIZE;
+        cur = page_end.min(end);
+    }
+    true
+}
+
+/// 安全版 `translated_byte_buffer`。
+///
+/// `write` 表示内核的访问意图：内核将向该缓冲区写入（如 `read` 系统调用）
+/// 时传 `true`，要求用户页可写；内核将从该缓冲区读取（如 `write` 系统调用）
+/// 时传 `false`，要求用户页可读。区间非法时返回 `None`，调用方应优雅失败。
+pub fn try_translated_byte_buffer(
+    token: usize,
+    ptr: *const u8,
+    len: usize,
+    write: bool,
+) -> Option<Vec<&'static mut [u8]>> {
+    if !check_user_range(token, ptr as usize, len, write) {
+        return None;
+    }
+    // 校验通过后，以下逐页翻译不会触发未映射 panic
     let page_table = PageTable::from_token(token);
     let mut start = ptr as usize;
     let end = start + len;
@@ -156,43 +232,104 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
         }
         start = end_va.into();
     }
-    v
+    Some(v)
 }
 
-/// Load a string from other address spaces into kernel space without an end `\0`.
-pub fn translated_str(token: usize, ptr: *const u8) -> String {
+/// 安全版 `translated_str`：从用户空间加载以 `\0` 结尾的字符串。
+///
+/// 逐页扫描：只要求“实际扫描过的页”已映射、带 `U` 标志、可读，
+/// 一旦遇到 `\0` 立即成功返回；因此字符串很短时不会要求其后的内存也映射。
+/// 若扫描超过 `max_len` 仍无终止符（或中途遇到非法页），返回 `None`。
+pub fn try_translated_str(token: usize, ptr: *const u8, max_len: usize) -> Option<String> {
+    let start = ptr as usize;
+    if start == 0 || max_len == 0 {
+        return None;
+    }
+    // 仅做数值边界检查：扫描上限不得溢出、不得越过用户正区
+    let limit = start.checked_add(max_len)?;
+    if limit > USER_VA_LIMIT {
+        return None;
+    }
     let page_table = PageTable::from_token(token);
     let mut string = String::new();
-    let mut va = ptr as usize;
-    loop {
-        let ch: u8 = *(page_table
-            .translate_va(VirtAddr::from(va))
-            .unwrap()
-            .get_mut());
-        if ch == 0 {
-            break;
+    let mut cur = start;
+    while cur < limit {
+        // 只校验当前扫描到的这一页：必须映射、带 U 标志、可读
+        let pte = page_table.translate(VirtAddr::from(cur).floor())?;
+        let flags = pte.flags();
+        if !flags.contains(PTEFlags::U) || !flags.contains(PTEFlags::R) {
+            return None;
         }
-        string.push(ch as char);
-        va += 1;
+        let ppn = pte.ppn();
+        let offset = cur & (PAGE_SIZE - 1);
+        let chunk = (PAGE_SIZE - offset).min(limit - cur);
+        let bytes = ppn.get_bytes_array();
+        let slice = &bytes[offset..offset + chunk];
+        match slice.iter().position(|&b| b == 0) {
+            Some(z) => {
+                string.extend(slice[..z].iter().map(|&b| b as char));
+                return Some(string);
+            }
+            None => {
+                string.extend(slice.iter().map(|&b| b as char));
+                cur += chunk;
+            }
+        }
     }
-    string
+    None
 }
 
-pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
+/// 安全版 `translated_ref`：校验后返回对用户内存中 `T` 的共享引用。
+///
+/// 要求 `T` 完整落在同一用户页内（避免跨页时物理内存不连续导致读错数据），
+/// 且该页已映射、带 `U` 标志、可读。非法时返回 `None`。
+pub fn try_translated_ref<T>(token: usize, ptr: *const T) -> Option<&'static T> {
+    let addr = ptr as usize;
+    let size = core::mem::size_of::<T>();
+    if size == 0 || addr == 0 || addr % core::mem::align_of::<T>() != 0 {
+        return None;
+    }
+    let end = addr.checked_add(size)?;
+    if end > USER_VA_LIMIT {
+        return None;
+    }
+    // 跨页检查：整个 T 必须位于同一页内
+    if (addr >> PAGE_SIZE_BITS) != ((end - 1) >> PAGE_SIZE_BITS) {
+        return None;
+    }
+    if !check_user_range(token, addr, size, false) {
+        return None;
+    }
     let page_table = PageTable::from_token(token);
     page_table
-        .translate_va(VirtAddr::from(ptr as usize))
-        .unwrap()
-        .get_ref()
+        .translate_va(VirtAddr::from(addr))
+        .map(|pa| pa.get_ref())
 }
 
-pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
+/// 安全版 `translated_refmut`：校验后返回对用户内存中 `T` 的可变引用。
+///
+/// 要求与 `try_translated_ref` 相同，且该页可写。非法时返回 `None`。
+pub fn try_translated_refmut<T>(token: usize, ptr: *mut T) -> Option<&'static mut T> {
+    let addr = ptr as usize;
+    let size = core::mem::size_of::<T>();
+    if size == 0 || addr == 0 || addr % core::mem::align_of::<T>() != 0 {
+        return None;
+    }
+    let end = addr.checked_add(size)?;
+    if end > USER_VA_LIMIT {
+        return None;
+    }
+    // 跨页检查：整个 T 必须位于同一页内
+    if (addr >> PAGE_SIZE_BITS) != ((end - 1) >> PAGE_SIZE_BITS) {
+        return None;
+    }
+    if !check_user_range(token, addr, size, true) {
+        return None;
+    }
     let page_table = PageTable::from_token(token);
-    let va = ptr as usize;
     page_table
-        .translate_va(VirtAddr::from(va))
-        .unwrap()
-        .get_mut()
+        .translate_va(VirtAddr::from(addr))
+        .map(|pa| pa.get_mut())
 }
 
 pub struct UserBuffer {

@@ -1,5 +1,8 @@
 use crate::fs::{OpenFlags, open_file};
-use crate::mm::{translated_ref, translated_refmut, translated_str};
+use crate::mm::{MAX_ARGV, MAX_STR_LEN, copy_from_user, copy_to_user, try_translated_str};
+use crate::security::{
+    self, CapabilitySet, IpcError, IpcObject, IpcOperation, IpcRequest, IpcSubject, Uid,
+};
 use crate::task::{
     MAX_SIG, SignalAction, SignalFlags, add_task, current_task, current_user_token,
     exit_current_and_run_next, pid2task, suspend_current_and_run_next,
@@ -8,6 +11,18 @@ use crate::timer::get_time_ms;
 use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+
+fn ipc_error_to_ret(error: IpcError) -> isize {
+    match error {
+        IpcError::PermissionDenied => -1,
+        IpcError::InvalidAddress => -14,
+        IpcError::InvalidArgument => -22,
+        IpcError::ProcessNotFound => -3,
+        IpcError::TooManyFiles => -24,
+        IpcError::ResourceExhausted => -28,
+        IpcError::TryAgain => -11,
+    }
+}
 
 pub fn sys_exit(exit_code: i32) -> ! {
     exit_current_and_run_next(exit_code);
@@ -43,17 +58,28 @@ pub fn sys_fork() -> isize {
 
 pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
     let token = current_user_token();
-    let path = translated_str(token, path);
+    // 校验路径字符串：非法指针或超长返回 -1
+    let Some(path) = try_translated_str(token, path, MAX_STR_LEN) else {
+        return -14;
+    };
     let mut args_vec: Vec<String> = Vec::new();
     loop {
-        let arg_str_ptr = *translated_ref(token, args);
+        // 逐项校验参数指针：非法地址返回 -1，不 panic
+        let Ok(arg_str_ptr) = copy_from_user(token, args) else {
+            return -14;
+        };
         if arg_str_ptr == 0 {
             break;
         }
-        args_vec.push(translated_str(token, arg_str_ptr as *const u8));
-        unsafe {
-            args = args.add(1);
+        // 限制参数个数，防止未以 0 结尾的 argv 数组导致无限遍历
+        if args_vec.len() >= MAX_ARGV {
+            return -1;
         }
+        let Some(arg) = try_translated_str(token, arg_str_ptr as *const u8, MAX_STR_LEN) else {
+            return -14;
+        };
+        args_vec.push(arg);
+        args = args.wrapping_add(1);
     }
     if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
         let all_data = app_inode.read_all();
@@ -89,14 +115,18 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         // ++++ release child PCB
     });
     if let Some((idx, _)) = pair {
-        let child = inner.children.remove(idx);
-        // confirm that child will be deallocated after being removed from children list
-        assert_eq!(Arc::strong_count(&child), 1);
+        let child = &inner.children[idx];
         let found_pid = child.getpid();
         // ++++ temporarily access child PCB exclusively
         let exit_code = child.inner_exclusive_access().exit_code;
         // ++++ release child PCB
-        *translated_refmut(inner.memory_set.token(), exit_code_ptr) = exit_code;
+        // 先复制退出码：非法地址返回 EFAULT，且不移动 children 列表，调用方可重试。
+        if copy_to_user(inner.memory_set.token(), exit_code_ptr, &exit_code).is_err() {
+            return -14;
+        }
+        let child = inner.children.remove(idx);
+        // confirm that child will be deallocated after being removed from children list
+        assert_eq!(Arc::strong_count(&child), 1);
         found_pid as isize
     } else {
         -2
@@ -105,20 +135,64 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 }
 
 pub fn sys_kill(pid: usize, signum: i32) -> isize {
-    if let Some(task) = pid2task(pid) {
-        if let Some(flag) = SignalFlags::from_bits(1 << signum) {
-            // insert the signal if legal
-            let mut task_ref = task.inner_exclusive_access();
-            if task_ref.signals.contains(flag) {
-                return -1;
-            }
-            task_ref.signals.insert(flag);
-            0
-        } else {
-            -1
+    if signum < 0 || signum as usize > MAX_SIG {
+        return ipc_error_to_ret(IpcError::InvalidArgument);
+    }
+    let flag = match SignalFlags::from_bits(1u32 << signum as u32) {
+        Some(f) => f,
+        None => return ipc_error_to_ret(IpcError::InvalidArgument),
+    };
+
+    let target = match pid2task(pid) {
+        Some(t) => t,
+        None => return ipc_error_to_ret(IpcError::ProcessNotFound),
+    };
+
+    let caller = current_task().unwrap();
+    let caller_pid = caller.getpid();
+    let target_uid = {
+        let inner = target.inner_exclusive_access();
+        inner.security.credentials.uid
+    };
+
+    // A+D integration point: policy, quota bookkeeping and audit all pass
+    // through the stable facade. Authorization failures are recorded by preflight.
+    let permit = {
+        let mut inner = caller.inner_exclusive_access();
+        let credentials = inner.security.credentials;
+        let request = IpcRequest {
+            subject: IpcSubject {
+                pid: caller_pid,
+                uid: credentials.uid,
+                capabilities: credentials.capabilities,
+            },
+            object: IpcObject {
+                id: pid as u64,
+                owner_uid: target_uid,
+            },
+            operation: IpcOperation::SignalSend,
+            amount: 1,
+        };
+        match security::preflight(&mut inner.security, request) {
+            Ok(permit) => permit,
+            Err(error) => return ipc_error_to_ret(error),
         }
-    } else {
-        -1
+    };
+
+    let outcome = {
+        let mut target_inner = target.inner_exclusive_access();
+        if target_inner.signals.contains(flag) {
+            Err(IpcError::TryAgain)
+        } else {
+            target_inner.signals.insert(flag);
+            Ok(1)
+        }
+    };
+
+    let mut inner = caller.inner_exclusive_access();
+    match security::complete(&mut inner.security, permit, outcome) {
+        Ok(_) => 0,
+        Err(error) => ipc_error_to_ret(error),
     }
 }
 
@@ -181,10 +255,54 @@ pub fn sys_sigaction(
             return -1;
         }
         let prev_action = inner.signal_actions.table[signum as usize];
-        *translated_refmut(token, old_action) = prev_action;
-        inner.signal_actions.table[signum as usize] = *translated_ref(token, action);
+        // 复制输入后再写回旧动作；任一地址非法都返回 EFAULT，不修改内核动作表。
+        let Ok(new_action) = copy_from_user(token, action) else {
+            return -14;
+        };
+        if copy_to_user(token, old_action, &prev_action).is_err() {
+            return -14;
+        }
+        inner.signal_actions.table[signum as usize] = new_action;
         0
     } else {
         -1
     }
+}
+
+// ---------------------------------------------------------------------------
+//  Credential syscalls
+// ---------------------------------------------------------------------------
+
+/// Return the UID of the calling process.
+pub fn sys_getuid() -> isize {
+    let task = current_task().unwrap();
+    let inner = task.inner_exclusive_access();
+    inner.security.credentials.uid as isize
+}
+
+/// Change the UID of the calling process.
+///
+/// Only root (UID 0) may call this.  After the call the process loses root
+/// privileges (its capabilities are cleared) unless `uid == 0`.
+/// Returns 0 on success, -1 on failure.
+pub fn sys_setuid(uid: usize) -> isize {
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    let cred = &mut inner.security.credentials;
+
+    // Only root can change UID.
+    if !cred.is_root() {
+        return ipc_error_to_ret(IpcError::PermissionDenied);
+    }
+
+    let Ok(new_uid) = Uid::try_from(uid) else {
+        return ipc_error_to_ret(IpcError::InvalidArgument);
+    };
+    cred.uid = new_uid;
+    // Dropping root: lose all capabilities.
+    // Staying root: keep all capabilities.
+    if new_uid != 0 {
+        cred.capabilities = CapabilitySet::empty();
+    }
+    0
 }

@@ -2,7 +2,8 @@ use super::{KernelStack, PidHandle, SignalFlags, pid_alloc};
 use super::{SignalActions, TaskContext};
 use crate::config::TRAP_CONTEXT;
 use crate::fs::{File, Stdin, Stdout};
-use crate::mm::{KERNEL_SPACE, MemorySet, PhysPageNum, VirtAddr, translated_refmut};
+use crate::mm::{KERNEL_SPACE, MemorySet, PhysPageNum, VirtAddr, try_translated_refmut};
+use crate::security::ProcessSecurityState;
 use crate::sync::UPSafeCell;
 use crate::trap::{TrapContext, trap_handler};
 use alloc::string::String;
@@ -30,6 +31,7 @@ pub struct TaskControlBlockInner {
     pub children: Vec<Arc<TaskControlBlock>>,
     pub exit_code: i32,
     pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
+    pub security: ProcessSecurityState,
     pub signals: SignalFlags,
     pub signal_mask: SignalFlags,
     // the signal which is being handling
@@ -102,6 +104,7 @@ impl TaskControlBlock {
                         // 2 -> stderr
                         Some(Arc::new(Stdout)),
                     ],
+                    security: ProcessSecurityState::initial(),
                     signals: SignalFlags::empty(),
                     signal_mask: SignalFlags::empty(),
                     handling_sig: -1,
@@ -133,12 +136,15 @@ impl TaskControlBlock {
         // push arguments on user stack
         user_sp -= (args.len() + 1) * core::mem::size_of::<usize>();
         let argv_base = user_sp;
+        // 这些地址位于内核刚映射好的用户栈内，属于内核不变量，
+        // 仍走校验版翻译；若失败说明栈布局本身出错，直接 panic 暴露问题。
         let mut argv: Vec<_> = (0..=args.len())
             .map(|arg| {
-                translated_refmut(
+                try_translated_refmut(
                     memory_set.token(),
                     (argv_base + arg * core::mem::size_of::<usize>()) as *mut usize,
                 )
+                .expect("exec: argv slot must be mapped in the fresh user stack")
             })
             .collect();
         *argv[args.len()] = 0;
@@ -147,10 +153,12 @@ impl TaskControlBlock {
             *argv[i] = user_sp;
             let mut p = user_sp;
             for c in args[i].as_bytes() {
-                *translated_refmut(memory_set.token(), p as *mut u8) = *c;
+                *try_translated_refmut(memory_set.token(), p as *mut u8)
+                    .expect("exec: arg string area must be mapped") = *c;
                 p += 1;
             }
-            *translated_refmut(memory_set.token(), p as *mut u8) = 0;
+            *try_translated_refmut(memory_set.token(), p as *mut u8)
+                .expect("exec: arg terminator area must be mapped") = 0;
         }
         // make the user_sp aligned to 8B for k210 platform
         user_sp -= user_sp % core::mem::size_of::<usize>();
@@ -210,6 +218,7 @@ impl TaskControlBlock {
                     children: Vec::new(),
                     exit_code: 0,
                     fd_table: new_fd_table,
+                    security: ProcessSecurityState::fork_from(&parent_inner.security),
                     signals: SignalFlags::empty(),
                     // inherit the signal_mask and signal_action
                     signal_mask: parent_inner.signal_mask,
