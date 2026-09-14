@@ -1,0 +1,17 @@
+rCore Secure IPC v1.0.0 - main CI evidence
+Repository: https://github.com/Luchitong/rcore-secure-ipc
+Commit: c202b1764c63ae70006edabe8af3f892c82bad72
+Run: https://github.com/Luchitong/rcore-secure-ipc/actions/runs/34799749443
+Date: 2026-09-14 (Asia/Shanghai)
+
+Run rCore user tests: PASS (4m14s)
+Build Rust documentation: PASS (18s)
+Publish documentation: PASS (9s)
+
+[audit_stress_test] PASS children=6 events_per_child=128 total=768 retained=256 overwritten_delta=768 elapsed_ms=23
+[usertests] expected-success suite result: 28/28 passed
+[usertests] expected-failure suite result: 4/4 passed
+[usertests] PASS all tests: 32/32
+Usertests passed!
+
+Overall conclusion: success

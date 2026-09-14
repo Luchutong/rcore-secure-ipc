@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect x="0" y="0" width="1600" height="900" fill="#ffffff"/>
+  <text x="90" y="90" font-family="DejaVu Sans, sans-serif" font-size="42" font-weight="700" fill="#111111">最终测试通过情况（v1.0.0）</text>
+  <line x1="90" y1="125" x2="1510" y2="125" stroke="#222222" stroke-width="2"/>
+
+  <text x="100" y="245" font-family="DejaVu Sans, sans-serif" font-size="30" fill="#222222">宿主审计测试</text>
+  <rect x="430" y="200" width="880" height="60" fill="#e7edf5" stroke="#333333" stroke-width="1"/>
+  <rect x="430" y="200" width="880" height="60" fill="#3b6ea8"/>
+  <text x="1340" y="243" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" fill="#111111">28 / 28</text>
+
+  <text x="100" y="385" font-family="DejaVu Sans, sans-serif" font-size="30" fill="#222222">QEMU 预期成功</text>
+  <rect x="430" y="340" width="880" height="60" fill="#e7edf5" stroke="#333333" stroke-width="1"/>
+  <rect x="430" y="340" width="880" height="60" fill="#3b6ea8"/>
+  <text x="1340" y="383" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" fill="#111111">28 / 28</text>
+
+  <text x="100" y="525" font-family="DejaVu Sans, sans-serif" font-size="30" fill="#222222">QEMU 预期异常</text>
+  <rect x="430" y="480" width="880" height="60" fill="#e7edf5" stroke="#333333" stroke-width="1"/>
+  <rect x="430" y="480" width="880" height="60" fill="#3b6ea8"/>
+  <text x="1340" y="523" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" fill="#111111">4 / 4</text>
+
+  <rect x="90" y="640" width="1420" height="105" fill="#f4f4f4" stroke="#888888" stroke-width="1"/>
+  <text x="120" y="687" font-family="DejaVu Sans, sans-serif" font-size="29" font-weight="700" fill="#111111">总计：32 / 32 通过，失败：0</text>
+  <text x="120" y="727" font-family="DejaVu Sans, sans-serif" font-size="24" fill="#333333">证据：GitHub Actions #34799749443，main@c202b17，2026-09-14</text>
+  <text x="90" y="835" font-family="DejaVu Sans, sans-serif" font-size="21" fill="#555555">注：预期异常用例以规定的异常退出码结束即判定通过，不代表测试失败。</text>
+</svg>

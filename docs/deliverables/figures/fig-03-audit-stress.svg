@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="90" y="85" font-family="DejaVu Sans, sans-serif" font-size="40" font-weight="700" fill="#111111">审计压力测试与有界内存结果</text>
+  <line x1="90" y1="120" x2="1510" y2="120" stroke="#222222" stroke-width="2"/>
+
+  <line x1="240" y1="710" x2="1400" y2="710" stroke="#222222" stroke-width="2"/>
+  <line x1="240" y1="190" x2="240" y2="710" stroke="#222222" stroke-width="2"/>
+  <g font-family="DejaVu Sans, sans-serif" font-size="20" fill="#333333">
+    <text x="195" y="716">0</text><text x="178" y="586">200</text><text x="178" y="456">400</text><text x="178" y="326">600</text><text x="178" y="196">800</text>
+  </g>
+  <g stroke="#dddddd" stroke-width="1">
+    <line x1="240" y1="580" x2="1400" y2="580"/><line x1="240" y1="450" x2="1400" y2="450"/><line x1="240" y1="320" x2="1400" y2="320"/><line x1="240" y1="190" x2="1400" y2="190"/>
+  </g>
+
+  <rect x="430" y="211" width="260" height="499" fill="#3b6ea8"/>
+  <text x="510" y="190" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" fill="#111111">768</text>
+  <text x="430" y="760" font-family="DejaVu Sans, sans-serif" font-size="27" fill="#222222">生成并计数的事件</text>
+
+  <rect x="940" y="544" width="260" height="166" fill="#8397ad"/>
+  <text x="1025" y="523" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" fill="#111111">256</text>
+  <text x="965" y="760" font-family="DejaVu Sans, sans-serif" font-size="27" fill="#222222">最终保留记录</text>
+
+  <text x="90" y="830" font-family="DejaVu Sans, sans-serif" font-size="22" fill="#444444">6 个子进程 × 128 次失败事件；全部事件进入统计，环形缓冲区始终最多占用 256 条记录。</text>
+  <text x="90" y="865" font-family="DejaVu Sans, sans-serif" font-size="20" fill="#666666">来源：main CI #34799749443，elapsed_ms=23，overwritten_delta=768。</text>
+</svg>

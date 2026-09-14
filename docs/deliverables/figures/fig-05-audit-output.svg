@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="80" y="80" font-family="DejaVu Sans, sans-serif" font-size="40" font-weight="700" fill="#111111">auditctl 用户态审计读取实例</text>
+  <line x1="80" y1="115" x2="1520" y2="115" stroke="#222222" stroke-width="2"/>
+
+  <rect x="80" y="160" width="1440" height="570" fill="#fafafa" stroke="#333333" stroke-width="2"/>
+  <g font-family="DejaVu Sans Mono, monospace" font-size="23" fill="#111111">
+    <text x="115" y="215">&gt;&gt; auditctl stat</text>
+    <text x="115" y="260">capacity=256 retained=256</text>
+    <text x="115" y="300">total_events=20954 successful_events=20173 failed_events=781</text>
+    <text x="115" y="340">first_sequence=20699 next_sequence=20955</text>
+    <text x="115" y="405">&gt;&gt; auditctl read 20949</text>
+    <text x="115" y="450">seq=20950 pid=3 uid=0 op=pipe_create requested=1 result=1 status=OK</text>
+    <text x="115" y="495">seq=20951 pid=3 uid=0 op=pipe_create requested=1 result=1 status=OK</text>
+    <text x="115" y="540">seq=20952 pid=3 uid=0 op=pipe_create requested=1 result=1 status=OK</text>
+    <text x="115" y="585">seq=20953 pid=3 uid=0 op=pipe_create requested=1 result=1 status=OK</text>
+    <text x="115" y="630">seq=20954 pid=3 uid=0 op=pipe_create requested=1 result=1 status=OK</text>
+    <text x="115" y="685">auditctl: records=5 cursor=20954 through=20954</text>
+  </g>
+  <text x="80" y="790" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#333333">含义：用户程序可按稳定序号游标读取审计记录；读取不删除日志，也不会生成审计反馈事件。</text>
+  <text x="80" y="840" font-family="DejaVu Sans, sans-serif" font-size="20" fill="#666666">来源：v1.0.0 本地 QEMU 8.2.2 实际运行日志，2026-09-14。</text>
+</svg>

@@ -1,0 +1,42 @@
+rCore Secure IPC v1.0.0 - host audit tests
+Command: cd tests/audit-host && cargo test
+Date: 2026-09-14 (Asia/Shanghai)
+
+running 7 tests
+test abi_layout_matches_v1 ... ok
+test batch_conversion_marks_only_first_valid_record ... ok
+test errors_use_positive_errno_and_zero_result ... ok
+test conversion_preserves_metadata_and_initializes_abi_fields ... ok
+test operations_use_stable_ids_and_correct_success_amounts ... ok
+test stats_conversion_preserves_one_consistent_snapshot ... ok
+test recording_filters_feedback_and_keeps_ring_counters_consistent ... ok
+test result: ok. 7 passed; 0 failed
+
+running 12 tests
+test empty_tail_and_maximum_cursor_do_not_read ... ok
+test failed_batch_discards_partial_copy_and_preserves_last_successful_cursor ... ok
+test events_after_initial_tail_do_not_extend_command ... ok
+test help_and_invalid_arguments_never_call_the_kernel ... ok
+test incompatible_stats_and_inconsistent_counters_are_rejected ... ok
+test gap_unknown_operation_flags_and_errno_are_displayed_without_panicking ... ok
+test invalid_counts_and_records_cannot_panic_or_repeat_forever ... ok
+test paginates_more_than_32_records_and_keeps_reading_short_batches ... ok
+test reports_gap_even_if_all_initial_events_have_been_overwritten ... ok
+test stat_errors_report_errno_without_using_output ... ok
+test stat_prints_all_counters_and_sequence_bounds ... ok
+test zero_read_return_ends_iteration ... ok
+test result: ok. 12 passed; 0 failed
+
+running 9 tests
+test invalid_stat_parameters_record_once_without_copying ... ok
+test null_and_wrapping_output_ranges_fail_before_copying ... ok
+test copy_failure_records_efault_and_preserves_cursor_for_retry ... ok
+test overflow_reads_are_bounded_and_cursor_does_not_repeat ... ok
+test root_and_audit_capability_can_read_without_feedback ... ok
+test permission_precedes_parameters_and_zero_capacity ... ok
+test snapshot_excludes_events_appended_during_copy ... ok
+test stat_copies_only_eighty_bytes_and_preserves_tail ... ok
+test zero_capacity_and_empty_tail_do_not_access_output ... ok
+test result: ok. 9 passed; 0 failed
+
+Total: 28 passed; 0 failed

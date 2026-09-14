@@ -19,6 +19,7 @@
 `main` 现作为项目最终成果分支，`integration` 保留为阶段性集成记录。
 
 - [最终验收与发布记录](docs/FINAL_ACCEPTANCE.md)
+- [成果交付包：报告、测试、图片、日志与答辩材料](docs/deliverables/README.md)
 - [四人协作开发计划](docs/ROADMAP.md)
 - [团队分工与开发规范](docs/TEAM_COLLABORATION.md)
 - [IPC Security API v1](docs/IPC_SECURITY_API.md)

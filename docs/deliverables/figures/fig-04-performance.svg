@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="90" y="85" font-family="DejaVu Sans, sans-serif" font-size="40" font-weight="700" fill="#111111">管道创建/关闭基准：20,000 轮中位耗时</text>
+  <line x1="90" y1="120" x2="1510" y2="120" stroke="#222222" stroke-width="2"/>
+
+  <line x1="210" y1="700" x2="1450" y2="700" stroke="#222222" stroke-width="2"/>
+  <line x1="210" y1="170" x2="210" y2="700" stroke="#222222" stroke-width="2"/>
+  <g font-family="DejaVu Sans, sans-serif" font-size="20" fill="#333333">
+    <text x="166" y="706">0</text><text x="145" y="588">200</text><text x="145" y="470">400</text><text x="145" y="352">600</text><text x="145" y="234">800</text>
+    <text x="93" y="455" transform="rotate(-90 93 455)">中位耗时（ms）</text>
+  </g>
+  <g stroke="#dddddd" stroke-width="1">
+    <line x1="210" y1="582" x2="1450" y2="582"/><line x1="210" y1="464" x2="1450" y2="464"/><line x1="210" y1="346" x2="1450" y2="346"/><line x1="210" y1="228" x2="1450" y2="228"/>
+  </g>
+
+  <rect x="330" y="318" width="260" height="382" fill="#a8b1ba"/>
+  <text x="427" y="294" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700">647</text>
+  <text x="347" y="748" font-family="DejaVu Sans, sans-serif" font-size="25">原始基线</text>
+  <text x="337" y="782" font-family="DejaVu Sans, sans-serif" font-size="20" fill="#555555">main@a74354d</text>
+
+  <rect x="690" y="309" width="260" height="391" fill="#7692ae"/>
+  <text x="787" y="285" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700">662</text>
+  <text x="722" y="748" font-family="DejaVu Sans, sans-serif" font-size="25">C+D 预集成</text>
+  <text x="722" y="782" font-family="DejaVu Sans, sans-serif" font-size="20" fill="#555555">2026-09-09</text>
+
+  <rect x="1050" y="260" width="260" height="440" fill="#3b6ea8"/>
+  <text x="1147" y="236" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700">746</text>
+  <text x="1082" y="748" font-family="DejaVu Sans, sans-serif" font-size="25">最终安全版本</text>
+  <text x="1092" y="782" font-family="DejaVu Sans, sans-serif" font-size="20" fill="#555555">main@b626d92</text>
+
+  <text x="90" y="850" font-family="DejaVu Sans, sans-serif" font-size="21" fill="#555555">最终版本较原始基线增加 15.3%；为不同日期的 QEMU 端到端观测值，不解释为硬件级精确开销。</text>
+</svg>

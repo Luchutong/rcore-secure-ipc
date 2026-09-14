@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="80" y="82" font-family="DejaVu Sans, sans-serif" font-size="40" font-weight="700" fill="#111111">安全模块用户态测试矩阵</text>
+  <line x1="80" y1="115" x2="1520" y2="115" stroke="#222222" stroke-width="2"/>
+
+  <rect x="80" y="160" width="1440" height="70" fill="#e8edf3" stroke="#333333"/>
+  <text x="110" y="205" font-family="DejaVu Sans, sans-serif" font-size="26" font-weight="700">模块</text>
+  <text x="300" y="205" font-family="DejaVu Sans, sans-serif" font-size="26" font-weight="700">测试程序</text>
+  <text x="650" y="205" font-family="DejaVu Sans, sans-serif" font-size="26" font-weight="700">关键验证点</text>
+  <text x="1360" y="205" font-family="DejaVu Sans, sans-serif" font-size="26" font-weight="700">结果</text>
+
+  <g font-family="DejaVu Sans, sans-serif" font-size="25" fill="#222222">
+    <rect x="80" y="230" width="1440" height="110" fill="#ffffff" stroke="#888888"/>
+    <text x="110" y="295" font-weight="700">A</text><text x="300" y="295">cred_test</text><text x="650" y="278">跨 UID 拒绝、root 放行、同 UID 放行、</text><text x="650" y="312">fork 凭据继承、成功/失败审计</text><text x="1360" y="295" fill="#2b6f3e" font-weight="700">PASS</text>
+
+    <rect x="80" y="340" width="1440" height="110" fill="#f8f8f8" stroke="#888888"/>
+    <text x="110" y="405" font-weight="700">B</text><text x="300" y="405">badptr</text><text x="650" y="388">空指针、内核地址、高地址、长度溢出、</text><text x="650" y="422">open/pipe/read/write 返回 EFAULT</text><text x="1360" y="405" fill="#2b6f3e" font-weight="700">8 / 8</text>
+
+    <rect x="80" y="450" width="1440" height="110" fill="#ffffff" stroke="#888888"/>
+    <text x="110" y="515" font-weight="700">C</text><text x="300" y="515">quota_test</text><text x="650" y="498">FD/pipe/dup 配额、EMFILE/ENOSPC、</text><text x="650" y="532">失败回滚、fork 隔离、并发创建/关闭</text><text x="1360" y="515" fill="#2b6f3e" font-weight="700">7 / 7</text>
+
+    <rect x="80" y="560" width="1440" height="110" fill="#f8f8f8" stroke="#888888"/>
+    <text x="110" y="625" font-weight="700">D</text><text x="300" y="625">audit_test</text><text x="650" y="608">80 字节 ABI、游标分页、覆盖标志、</text><text x="650" y="642">一致统计快照、权限与复制失败</text><text x="1360" y="625" fill="#2b6f3e" font-weight="700">PASS</text>
+
+    <rect x="80" y="670" width="1440" height="110" fill="#ffffff" stroke="#888888"/>
+    <text x="110" y="735" font-weight="700">联动</text><text x="300" y="735">ipc_audit_integration_test</text><text x="650" y="718">管道创建/读/写、稳定对象 ID、坏指针、</text><text x="650" y="752">配额拒绝、回收后恢复及审计一致性</text><text x="1360" y="735" fill="#2b6f3e" font-weight="700">PASS</text>
+  </g>
+  <text x="80" y="845" font-family="DejaVu Sans, sans-serif" font-size="21" fill="#555555">数据来源：v1.0.0 用户程序独立运行及 main CI #34799749443。</text>
+</svg>

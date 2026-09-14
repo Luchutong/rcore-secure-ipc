@@ -1,0 +1,18 @@
+rCore Secure IPC v1.0.0 - final IPC benchmark
+Commit under test: main@b626d923736149873286734966cfba13a06a1b01
+Environment: WSL2, single-core rCore, QEMU 8.2.2, release build
+Command: ipc_bench 20000
+Date: 2026-09-14 (Asia/Shanghai)
+
+BENCH pipe_create_close iterations=20000 elapsed_ms=778 ns_per_iteration=38900 audit_events=20000 audit_successes=20000
+BENCH pipe_create_close iterations=20000 elapsed_ms=746 ns_per_iteration=37300 audit_events=20000 audit_successes=20000
+BENCH pipe_create_close iterations=20000 elapsed_ms=737 ns_per_iteration=36850 audit_events=20000 audit_successes=20000
+BENCH pipe_create_close iterations=20000 elapsed_ms=746 ns_per_iteration=37300 audit_events=20000 audit_successes=20000
+BENCH pipe_create_close iterations=20000 elapsed_ms=727 ns_per_iteration=36350 audit_events=20000 audit_successes=20000
+
+Sorted elapsed_ms: 727, 737, 746, 746, 778
+Median elapsed_ms: 746
+Median ns_per_iteration: 37300
+Original baseline main@a74354d median elapsed_ms: 647
+Observed difference: +99 ms, +15.3%, +4950 ns/iteration
+Conclusion: measurable constant-factor overhead; no order-of-magnitude regression.

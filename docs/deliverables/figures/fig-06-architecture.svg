@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333333"/>
+    </marker>
+  </defs>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="90" y="80" font-family="DejaVu Sans, sans-serif" font-size="40" font-weight="700" fill="#111111">安全 IPC 统一调用链</text>
+  <line x1="90" y1="115" x2="1510" y2="115" stroke="#222222" stroke-width="2"/>
+
+  <g font-family="DejaVu Sans, sans-serif" text-anchor="middle">
+    <rect x="90" y="280" width="245" height="160" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+    <text x="212" y="335" font-size="28" font-weight="700">用户参数</text><text x="212" y="380" font-size="22">pipe / read</text><text x="212" y="415" font-size="22">write / kill</text>
+
+    <rect x="405" y="280" width="245" height="160" fill="#e9f0f7" stroke="#333333" stroke-width="2"/>
+    <text x="527" y="335" font-size="28" font-weight="700">B 用户访问</text><text x="527" y="380" font-size="22">页权限、跨页、溢出</text><text x="527" y="415" font-size="22">失败返回 EFAULT</text>
+
+    <rect x="720" y="280" width="245" height="160" fill="#e9f0f7" stroke="#333333" stroke-width="2"/>
+    <text x="842" y="335" font-size="28" font-weight="700">A 授权策略</text><text x="842" y="380" font-size="22">UID / capability</text><text x="842" y="415" font-size="22">失败返回 EPERM</text>
+
+    <rect x="1035" y="280" width="245" height="160" fill="#e9f0f7" stroke="#333333" stroke-width="2"/>
+    <text x="1157" y="335" font-size="28" font-weight="700">C 资源治理</text><text x="1157" y="380" font-size="22">预留、提交、回滚</text><text x="1157" y="415" font-size="22">EMFILE / ENOSPC</text>
+
+    <rect x="1350" y="280" width="160" height="160" fill="#dce8f4" stroke="#333333" stroke-width="2"/>
+    <text x="1430" y="335" font-size="28" font-weight="700">D 审计</text><text x="1430" y="380" font-size="22">结果记录</text><text x="1430" y="415" font-size="22">有界缓冲</text>
+  </g>
+  <g stroke="#333333" stroke-width="3" marker-end="url(#arrow)">
+    <line x1="335" y1="360" x2="395" y2="360"/><line x1="650" y1="360" x2="710" y2="360"/><line x1="965" y1="360" x2="1025" y2="360"/><line x1="1280" y1="360" x2="1340" y2="360"/>
+  </g>
+
+  <rect x="405" y="570" width="875" height="120" fill="#f7f7f7" stroke="#555555" stroke-width="2"/>
+  <text x="842" y="620" text-anchor="middle" font-family="DejaVu Sans, sans-serif" font-size="28" font-weight="700">冻结公共契约：security/api.rs + preflight / complete</text>
+  <text x="842" y="660" text-anchor="middle" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#333333">模块只通过稳定类型和门面通信，降低四人并行开发时的交叉修改与集成冲突</text>
+
+  <text x="90" y="820" font-family="DejaVu Sans, sans-serif" font-size="22" fill="#555555">正式集成顺序：B → A → C → D；先建立安全输入边界，再接授权、资源状态与最终结果审计。</text>
+</svg>

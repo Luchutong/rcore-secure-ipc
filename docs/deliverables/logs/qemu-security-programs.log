@@ -1,0 +1,58 @@
+rCore Secure IPC v1.0.0 - focused user-space security programs
+Environment: WSL2, single-core rCore, QEMU 8.2.2, release build
+Command: cd os && make run
+Date: 2026-09-14 (Asia/Shanghai)
+
+>> cred_test
+[kernel] Killed, SIGKILL=9
+[kernel] Killed, SIGKILL=9
+cred_test passed!
+
+>> badptr
+badptr [PASS] write null rejected with EFAULT
+badptr [PASS] write kernel-addr rejected with EFAULT
+badptr [PASS] write high-addr rejected with EFAULT
+badptr [PASS] write overflow-len rejected with EFAULT
+badptr [PASS] open kernel-addr rejected with EFAULT
+badptr [PASS] open null rejected with EFAULT
+badptr [PASS] pipe kernel-addr rejected with EFAULT
+badptr [PASS] read kernel-addr rejected with EFAULT
+badptr summary: 8/8 passed
+
+>> quota_test
+========== quota_test ==========
+[quota] open FD exhaustion + recovery passed
+[quota] dup FD exhaustion + recovery passed
+[quota] pipe exhaustion + recovery passed
+[quota] pipe EMFILE + rollback passed
+[quota] dup(pipe_fd) accounting passed
+[quota] fork inheritance + isolation passed
+[quota] concurrent create/close passed
+quota_test passed!
+
+>> ipc_audit_integration_test
+ipc_audit_integration_test passed!
+
+>> audit_stress_test
+[audit_stress_test] PASS children=6 events_per_child=128 total=768 retained=256 overwritten_delta=634 elapsed_ms=13
+
+Note: overwritten_delta depends on the buffer occupancy before the test. The
+standalone run began with a partly filled buffer. In the final full CI suite,
+the already-full buffer produced overwritten_delta=768. Both runs validate
+that all 768 events are counted and at most 256 records remain resident.
+
+>> ipc_bench 20000
+BENCH pipe_create_close iterations=20000 elapsed_ms=737 ns_per_iteration=36850 audit_events=20000 audit_successes=20000
+
+>> auditctl stat
+capacity=256 retained=256
+total_events=20954 successful_events=20173 failed_events=781 overwritten_events=20698
+first_sequence=20699 next_sequence=20955
+
+>> auditctl read 20949
+seq=20950 time_ms=26742 pid=3 uid=0 op=pipe_create(2) object_id=0 owner_uid=0 requested=1 result=1 status=OK
+seq=20951 time_ms=26742 pid=3 uid=0 op=pipe_create(2) object_id=0 owner_uid=0 requested=1 result=1 status=OK
+seq=20952 time_ms=26742 pid=3 uid=0 op=pipe_create(2) object_id=0 owner_uid=0 requested=1 result=1 status=OK
+seq=20953 time_ms=26742 pid=3 uid=0 op=pipe_create(2) object_id=0 owner_uid=0 requested=1 result=1 status=OK
+seq=20954 time_ms=26742 pid=3 uid=0 op=pipe_create(2) object_id=0 owner_uid=0 requested=1 result=1 status=OK
+auditctl: records=5 cursor=20954 through=20954
