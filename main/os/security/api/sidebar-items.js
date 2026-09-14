@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IpcError","IpcOperation"],"struct":["CapabilitySet","IpcObject","IpcRequest","IpcSubject"],"type":["IpcResult","ResourceId","Uid"]};

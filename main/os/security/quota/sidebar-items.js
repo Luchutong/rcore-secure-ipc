@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_OPEN_FILES","MAX_OPEN_PIPE_FDS","PIPE_ENDPOINTS_PER_PIPE"],"enum":["QuotaReservationKind"],"fn":["finish","reserve"],"struct":["QuotaReservation","QuotaState"]};

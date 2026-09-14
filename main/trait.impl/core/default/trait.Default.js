@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["os",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.98.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"os/security/audit/struct.AuditRecordV1.html\" title=\"struct os::security::audit::AuditRecordV1\">AuditRecordV1</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.98.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"os/security/audit/struct.IpcStatsV1.html\" title=\"struct os::security::audit::IpcStatsV1\">IpcStatsV1</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.98.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"os/security/quota/struct.QuotaState.html\" title=\"struct os::security::quota::QuotaState\">QuotaState</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.98.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"os/task/action/struct.SignalAction.html\" title=\"struct os::task::action::SignalAction\">SignalAction</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.98.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"os/task/action/struct.SignalActions.html\" title=\"struct os::task::action::SignalActions\">SignalActions</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1485]}

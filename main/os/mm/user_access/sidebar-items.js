@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["copy_bytes_from_user","copy_from_user","copy_to_user"]};
