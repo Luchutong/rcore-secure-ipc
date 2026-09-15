@@ -1,0 +1,35 @@
+Module A credential and signal authorization test
+Date: 2026-09-15T15:22:52+08:00
+Delivery commit: 35aec27a65ec043a9e2c957085091fbd90118759
+Code version: v1.0.0 (c202b1764c63ae70006edabe8af3f892c82bad72)
+Environment: rustc 1.98.1; cargo 1.98.1; QEMU 8.2.2
+
+Command: cd os && make run
+
+QEMU shell command: sig_simple
+signal_simple: sigaction
+signal_simple: kill
+user_sig_test passed
+signal_simple: Done
+
+Observed result: self-send = ALLOW
+
+QEMU shell command: cred_test
+[kernel] Killed, SIGKILL=9
+[kernel] Killed, SIGKILL=9
+cred_test passed!
+
+Assertions verified by cred_test:
+- same UID signal send = ALLOW
+- root cross-UID signal send = ALLOW
+- unprivileged cross-UID signal send = EPERM (-1)
+
+Presentation summary:
+- self-send = ALLOW
+- same UID = ALLOW
+- root / CAP_KILL = ALLOW
+- unprivileged cross-UID = EPERM
+
+Note: the QEMU user program directly exercises the root alternative in the
+"root / CAP_KILL" row. CAP_KILL is the equivalent explicit policy alternative
+implemented in os/src/security/policy.rs.

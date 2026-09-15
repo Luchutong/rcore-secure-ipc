@@ -131,9 +131,9 @@ EPERM。普通进程的 setuid 只允许降权，避免先降权后再自行恢�
 
 **主讲：A｜45 秒**
 
-页面用四格结果展示：同 UID 允许、跨 UID 拒绝、root 允许、capability 允许。底部放：
-`cred_test passed!`。可以从真实终端日志截图，也可配合
-[fig-05-audit-output.png](figures/fig-05-audit-output.png) 的相关审计记录。
+整页插入 [module-a-auth-results.png](figures/module-a-auth-results.png)，不再叠加标题、图标或说明文字。
+实际 QEMU 输出保存在 [module-a-auth-test-20260915.log](logs/module-a-auth-test-20260915.log)，答辩时口头说明
+`sig_simple` 验证自发送，`cred_test` 验证同 UID、root 放行和跨 UID 拒绝。
 
 **备注讲稿：**
 
