@@ -27,6 +27,7 @@ git worktree add ../rcore-secure-ipc-deliverables origin/deliverables/final-kit
 | 截图与日志操作手册 | [SCREENSHOT_AND_LOG_GUIDE.md](SCREENSHOT_AND_LOG_GUIDE.md) | 统一截图、命名、图注、日志和复现实验方法 |
 | 答辩 PPT 正式方案 | [DEFENSE_PPT_10MIN_4PERSON.md](DEFENSE_PPT_10MIN_4PERSON.md) | 12 页、约 10 分钟；D 主讲统筹，A/B/C 分模块接力 |
 | 答辩 PPT 压缩备用 | [DEFENSE_PPT.md](DEFENSE_PPT.md) | 现场临时限时 5 分钟时使用，不与正式稿混讲 |
+| D 模块答辩问答手册 | [DEFENSE_QA_MODULE_D.md](DEFENSE_QA_MODULE_D.md) | 围绕模块 D 与项目整体的分级问答、统一数据口径和易错表述 |
 | 最终交付检查表 | [FINAL_CHECKLIST.md](FINAL_CHECKLIST.md) | 汇总前的逐项验收和文件命名规则 |
 | 最终答辩综合验证原始证据 | [generated/final-defense/README.md](generated/final-defense/README.md) | 本次实际 QEMU/宿主测试 PTY 记录、性能原始日志及可重建 PNG |
 | 原始日志 | [logs/](logs/) | CI、宿主测试、独立安全程序和性能原始输出 |
