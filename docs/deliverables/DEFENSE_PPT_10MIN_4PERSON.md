@@ -131,9 +131,10 @@ EPERM。普通进程的 setuid 只允许降权，避免先降权后再自行恢�
 
 **主讲：A｜45 秒**
 
-整页插入 [module-a-auth-results.png](figures/module-a-auth-results.png)，不再叠加标题、图标或说明文字。
-实际 QEMU 输出保存在 [module-a-auth-test-20260915.log](logs/module-a-auth-test-20260915.log)，答辩时口头说明
-`sig_simple` 验证自发送，`cred_test` 验证同 UID、root 放行和跨 UID 拒绝。
+整页优先插入 [module-a-qemu-audit-evidence.png](figures/module-a-qemu-audit-evidence.png)，展示真实 QEMU
+命令、程序通过信息以及四条 `signal_send` 审计记录。若页面更偏向结论展示，则改用
+[module-a-auth-results.png](figures/module-a-auth-results.png)，不要在两张图上再叠加标题或图标。
+完整 QEMU 输出保存在 [module-a-auth-test-20260915.log](logs/module-a-auth-test-20260915.log)。
 
 **备注讲稿：**
 
