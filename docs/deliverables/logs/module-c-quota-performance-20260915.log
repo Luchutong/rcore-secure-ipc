@@ -1,0 +1,45 @@
+Module C quota correctness and performance evidence
+Date: 2026-09-15T16:00:37+08:00
+Code under test: deliverables/final-kit@fd2941240b361b7ebd046f60859cf8a7536f57b1
+Environment: rustc 1.98.1; cargo 1.98.1; QEMU 8.2.2
+
+QEMU regression command: cd os && make run TEST=1
+
+[usertests] RUN  quota_test
+========== quota_test ==========
+[quota] open FD exhaustion + recovery
+[quota] open FD exhaustion + recovery passed
+[quota] dup FD exhaustion + recovery
+[quota] dup FD exhaustion + recovery passed
+[quota] pipe exhaustion + recovery
+[quota] pipe exhaustion + recovery passed
+[quota] pipe EMFILE + rollback
+[quota] pipe EMFILE + rollback passed
+[quota] dup(pipe_fd) accounting
+[quota] dup(pipe_fd) accounting passed
+[quota] fork inheritance + isolation
+[quota] fork inheritance + isolation passed
+[quota] concurrent create/close
+[quota] concurrent create/close passed
+quota_test passed!
+[usertests] PASS quota_test: exit=0
+[usertests] expected-success suite result: 28/28 passed
+[usertests] expected-failure suite result: 4/4 passed
+[usertests] PASS all tests: 32/32
+Usertests passed!
+
+Performance source: logs/final-performance.log
+Command: ipc_bench 20000
+Secure IPC samples (ms): 778, 746, 737, 746, 727
+Sorted samples (ms): 727, 737, 746, 746, 778
+Secure IPC median: 746 ms
+Original baseline median: 647 ms
+Observed difference: +99 ms, +15.3%, +4950 ns/iteration
+Per-run workload: 20,000 × pipe → close(read) → close(write)
+
+Interpretation:
+- Quota limits reject excess resources with EMFILE or ENOSPC and recover after close.
+- A pipe creation that cannot reserve two total FD slots returns EMFILE; after
+  one descriptor is closed, pipe creation succeeds, proving no counter leak.
+- The QEMU timing comparison is an end-to-end observation across dates. It
+  supports a constant-factor overhead conclusion, not a hardware-precise claim.

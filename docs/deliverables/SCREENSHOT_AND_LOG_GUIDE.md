@@ -58,6 +58,12 @@
 - `figures/module-b-badptr-qemu-evidence.png`：原始测试证据页，包含逐项输出及攻击后运行
   `hello_world` 的存活证明。
 
+模块 C 已提供三张可直接插入的 16:9 图片：
+
+- `figures/module-c-quota-performance-summary.png`：第 9 页主图，配额正确性与性能数据合并展示。
+- `figures/module-c-quota-qemu-evidence.png`：七组 `quota_test` 通过和 32/32 回归证据。
+- `figures/module-c-performance-evidence.png`：五次性能样本、中位数与 +15.3% 计算证据。
+
 ## 4. 日志采集命令
 
 ### 4.1 自动测试日志

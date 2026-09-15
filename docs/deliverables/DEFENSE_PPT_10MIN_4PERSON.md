@@ -216,8 +216,11 @@ EPERM。普通进程的 setuid 只允许降权，避免先降权后再自行恢�
 
 **主讲：C｜50 秒**
 
-左侧放配额测试结论：7 组场景通过、耗尽后返回 `EMFILE/ENOSPC`、关闭端点后可再次创建。
-右侧使用 [fig-04-performance.png](figures/fig-04-performance.png)。
+整页使用 [module-c-quota-performance-summary.png](figures/module-c-quota-performance-summary.png)：左侧四张卡片
+分别说明上限、释放恢复、失败回滚和生命周期一致；右侧只保留 647 ms、746 ms、+15.3% 和工作负载。
+真实配额运行输出使用 [module-c-quota-qemu-evidence.png](figures/module-c-quota-qemu-evidence.png)，五次性能样本使用
+[module-c-performance-evidence.png](figures/module-c-performance-evidence.png)，均适合放在备用页；完整数据见
+[module-c-quota-performance-20260915.log](logs/module-c-quota-performance-20260915.log)。
 
 **备注讲稿：**
 
