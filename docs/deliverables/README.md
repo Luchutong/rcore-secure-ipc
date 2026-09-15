@@ -28,6 +28,7 @@ git worktree add ../rcore-secure-ipc-deliverables origin/deliverables/final-kit
 | 答辩 PPT 正式方案 | [DEFENSE_PPT_10MIN_4PERSON.md](DEFENSE_PPT_10MIN_4PERSON.md) | 12 页、约 10 分钟；D 主讲统筹，A/B/C 分模块接力 |
 | 答辩 PPT 压缩备用 | [DEFENSE_PPT.md](DEFENSE_PPT.md) | 现场临时限时 5 分钟时使用，不与正式稿混讲 |
 | 最终交付检查表 | [FINAL_CHECKLIST.md](FINAL_CHECKLIST.md) | 汇总前的逐项验收和文件命名规则 |
+| 最终答辩综合验证原始证据 | [generated/final-defense/README.md](generated/final-defense/README.md) | 本次实际 QEMU/宿主测试 PTY 记录、性能原始日志及可重建 PNG |
 | 原始日志 | [logs/](logs/) | CI、宿主测试、独立安全程序和性能原始输出 |
 | 论文式图片 | [figures/](figures/) | 同时提供 SVG 与 1600×900 PNG |
 

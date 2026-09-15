@@ -1,0 +1,635 @@
+Script started on 2026-09-15 18:41:53+08:00 [COMMAND="cd os && make run TEST=1" TERM="dumb" TTY="/dev/pts/5" COLUMNS="80" LINES="24"]
+[0;32mQEMU version is 8.2.2(>=7), OK![0m
+(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add riscv64gc-unknown-none-elf
+riscv64gc-unknown-none-elf (installed)
+(command -v rust-objcopy >/dev/null && command -v rust-objdump >/dev/null) || cargo install cargo-binutils
+rustup component add rust-src
+info: component rust-src is up to date
+rustup component add llvm-tools-preview
+info: component llvm-tools is up to date
+Platform: qemu
+   Compiling os v0.1.0 (/home/luchitong/work/rcore-secure-ipc-main-docs/os)
+warning: unused imports: `check_user_range` and `try_translated_ref`
+  --> src/mm/mod.rs:15:67
+   |
+15 | ...EN, PageTable, PageTableEntry, UserBuffer, check_user_range,
+   |                                               ^^^^^^^^^^^^^^^^
+16 | ..._buffer, try_translated_ref, try_translated_refmut, try_translated_str,
+   |             ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `try_translated_ref` is never used
+   --> src/mm/page_table.rs:286:8
+    |
+286 | pub fn try_translated_ref<T>(token: usize, ptr: *const T) -> Option<&'s...
+    |        ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `unregister_pipe_fd` is never used
+   --> src/security/mod.rs:107:15
+    |
+107 | pub(crate) fn unregister_pipe_fd(state: &mut ProcessSecurityState, fd: ...
+    |               ^^^^^^^^^^^^^^^^^^
+
+warning: variant `AuditRead` is never constructed
+  --> src/security/api.rs:46:5
+   |
+41 | pub enum IpcOperation {
+   |          ------------ variant in this enum
+...
+46 |     AuditRead,
+   |     ^^^^^^^^^
+   |
+   = note: `IpcOperation` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: methods `release_files` and `unregister_pipe_fd` are never used
+   --> src/security/quota.rs:79:12
+    |
+ 43 | impl QuotaState {
+    | --------------- methods in this implementation
+...
+ 79 |     pub fn release_files(&mut self, amount: usize) {
+    |            ^^^^^^^^^^^^^
+...
+168 |     pub fn unregister_pipe_fd(&mut self, fd: usize) {
+    |            ^^^^^^^^^^^^^^^^^^
+
+warning: `os` (bin "os") generated 5 warnings (run `cargo fix --bin "os" -p os` to apply 1 suggestion)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.25s
+make[1]: Entering directory '/home/luchitong/work/rcore-secure-ipc-main-docs/user'
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.05s
+make[1]: Leaving directory '/home/luchitong/work/rcore-secure-ipc-main-docs/user'
+    Finished `release` profile [optimized] target(s) in 0.09s
+     Running `target/release/easy-fs-fuse -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/`
+src_path = ../user/src/bin/
+target_path = ../user/target/riscv64gc-unknown-none-elf/release/
+[rustsbi] RustSBI version 0.3.1, adapting to RISC-V SBI v1.0.0
+.______       __    __      _______.___________.  _______..______   __
+|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |
+|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |
+|      /     |  |  |  |    \   \       |  |      \   \    |   _  < |  |
+|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |
+| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|
+[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2
+[rustsbi] Platform Name      : riscv-virtio,qemu
+[rustsbi] Platform SMP       : 1
+[rustsbi] Platform Memory    : 0x80000000..0x88000000
+[rustsbi] Boot HART          : 0
+[rustsbi] Device Tree Region : 0x87e00000..0x87e010f6
+[rustsbi] Firmware Address   : 0x80000000
+[rustsbi] Supervisor Address : 0x80200000
+[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)
+[rustsbi] pmp02: 0x80000000..0x80200000 (---)
+[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)
+[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)
+[34m[ INFO] CLOCK_FREQ from device tree: 10000000[0m
+[34m[ INFO] [kernel] Hello, world![0m
+last 31688 Physical Frames.
+.text [0x80200000, 0x8021c000)
+.rodata [0x8021c000, 0x80222000)
+.data [0x80222000, 0x80223000)
+.bss [0x80223000, 0x80438000)
+mapping .text section
+mapping .rodata section
+mapping .data section
+mapping .bss section
+mapping physical memory
+mapping memory-mapped registers
+remap_test passed!
+/**** APPS ****
+[34m[ INFO] device features: SEG_MAX | GEOMETRY | BLK_SIZE | SCSI | FLUSH | TOPOLOGY | CONFIG_WCE | DISCARD | WRITE_ZEROES | NOTIFY_ON_EMPTY | RING_INDIRECT_DESC | RING_EVENT_IDX[0m
+[34m[ INFO] config: BlkConfig { capacity: Volatile(32768), size_max: Volatile(0), seg_max: Volatile(254), cylinders: Volatile(32), heads: Volatile(16), sectors: Volatile(63), blk_size: Volatile(512), physical_block_exp: Volatile(0), alignment_offset: Volatile(0), min_io_size: Volatile(0), opt_io_size: Volatile(0) }[0m
+[34m[ INFO] found a block device of size 16384KB[0m
+priv_csr
+priv_inst
+sig_simple2
+count_lines
+initproc
+audit_test
+forktree
+cred_test
+auditctl
+forktest
+pipe_large_test
+user_shell
+pipetest
+exit
+forktest2
+hello_world
+auditctl_test
+filetest_simple
+matrix
+run_pipe_test
+quota_test
+audit_stress_test
+stack_overflow
+sig_simple
+usertests_simple
+sleep_simple
+huge_write
+until_timeout
+fantastic_text
+getchar
+ipc_bench
+cat
+store_fault
+sleep
+usertests
+sig_tests
+badptr
+ipc_audit_integration_test
+forktest_simple
+cmdline_args
+yield
+infloop
+**************/
+[usertests] Running expected-success suite (28 tests)
+[usertests] RUN  filetest_simple
+file_test passed!
+[32m[usertests] PASS filetest_simple: exit=0[0m
+[usertests] RUN  cat
+Hello, world![32m[usertests] PASS cat: exit=0[0m
+[usertests] RUN  cmdline_args
+argc = 4
+argv[0] = cmdline_args
+argv[1] = 1
+argv[2] = 2
+argv[3] = 3
+[32m[usertests] PASS cmdline_args: exit=0[0m
+[usertests] RUN  exit
+I am the parent. Forking the child...
+I am parent, fork a child pid 3
+I am the parent, waiting now..
+I am the child.
+waitpid 3 ok.
+exit pass.
+[32m[usertests] PASS exit: exit=0[0m
+[usertests] RUN  fantastic_text
+[31mH[0m[32me[0m[33ml[0m[34ml[0m[35mo[0m [36mR[0m[37mu[0m[90ms[0m[91mt[0m [92mu[0m[93mC[0m[94mo[0m[95mr[0m[96me[0m[97m![0m
+[47m[30mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m[0m
+[31mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[32mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[33mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[34mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[35mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[36mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[37mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[90mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[91mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[92mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[93mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[94mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[95mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[96mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[97mreguler [4munderline[24m [7mreverse[27m [9mstrikethrough[29m[0m
+[32m[usertests] PASS fantastic_text: exit=0[0m
+[usertests] RUN  forktest_simple
+sys_wait without child process test passed!
+parent start, pid = 2!
+ready waiting on parent process!
+hello child process!
+child process pid = 3, exit code = 100
+[32m[usertests] PASS forktest_simple: exit=0[0m
+[usertests] RUN  forktest
+forked child pid = 3
+forked child pid = 4
+forked child pid = 5
+forked child pid = 6
+forked child pid = 7
+forked child pid = 8
+forked child pid = 9
+forked child pid = 10
+forked child pid = 11
+forked child pid = 12
+forked child pid = 13
+forked child pid = 14
+forked child pid = 15
+forked child pid = 16
+forked child pid = I am child 0
+I am child 1
+I am child 2
+I am child 3
+I am child 4
+I am child 5
+I am child 6
+I am child 7
+I am child 8
+I am child 9
+I am child I am child 11
+I am child 12
+I am child 13
+I am child 14
+17
+forked child pid = 18
+forked child pid = 19
+forked child pid = 20
+forked child pid = 21
+forked child pid = 22
+10
+I am child 15
+I am child 16
+I am child 17
+I am child 18
+I am child 19
+I am child 20
+forked child pid = 23
+forked child pid = 24
+forked child pid = 25
+forked child pid = 26
+forked child pid = 27
+I am child 21
+I am child 22
+I am child 23
+I am child 24
+I am child 25
+forked child pid = 28
+forked child pid = 29
+I am child 26
+I am child 27
+forked child pid = 30
+forked child pid = 31
+forked child pid = 32
+I am child 28
+I am child 29
+forktest pass.
+[32m[usertests] PASS forktest: exit=0[0m
+[usertests] RUN  forktest2
+pid 32 sleep for 1704 ms
+pid 31 sleep for 1601 ms
+pid 30 sleep for pid 29 sleep for 1304 ms
+pid 28 sleep for 1116 ms
+pid 27 sleep for 1025 ms
+pid 26 sleep for 1936 ms
+pid 25 sleep for 1764 ms
+pid 24 sleep for 1681 ms
+pid 23 sleep for 1600 ms
+pid 22 sleep for 1521 ms
+pid 21 sleep for 1444 ms
+pid 20 sleep for 1369 ms
+pid 19 sleep for 1225 ms
+pid 18 sleep for 1089 ms
+pid 17 sleep for pid 16 sleep for 1729 ms
+pid 15 sleep for 1676 ms
+pid 14 sleep for 1625 ms
+pid 13 sleep for 1576 ms
+pid 12 sleep for 1529 ms
+pid 11 sleep for 1484 ms
+pid 10 sleep for 1441 ms
+pid 9 sleep for 1400 ms
+pid 8pid 7 sleep for 1225 ms
+pid 6 sleep for 1169 ms
+pid 5 sleep for 1121 ms
+pid 4 sleep for 1081 ms
+pid 3 sleep for 1064 ms
+1401 ms
+1900 ms
+ sleep for 1361 ms
+pid 27 OK!
+pid 3 OK!
+pid 18 OK!
+pid 28 OK!
+pid 4 OK!
+pid 5 OK!
+pid 6 OK!
+pid 19 OK!
+pid 7 OK!
+pid 29 OK!
+pid 20 OK!
+pid 8 OK!
+pid 9 OK!
+pid 30 OK!
+pid 21 OK!
+pid 10 OK!
+pid 11 OK!
+pid 12 OK!
+pid 22 OK!
+pid 31 OK!
+pid 13 OK!
+pid 23 OK!
+pid 14 OK!
+pid 24 OK!
+pid 15 OK!
+pid 32 OK!
+pid 16 OK!
+pid 25 OK!
+pid 26 OK!
+pid 17 OK!
+forktest2 test passed!
+[32m[usertests] PASS forktest2: exit=0[0m
+[usertests] RUN  forktree
+pid2: 
+pid17: 0
+pid26: 1
+pid16: 01
+pid32: 10
+pid15: 11
+pid25: 00
+pid24: 010
+pid14: 011
+pid23: 100
+pid13: 101
+pid31: 110
+pid12: 000
+pid11: 001
+pid10: 0110
+pid21: 0111
+pid30: 1000
+pid9: 1001
+pid8: 1010
+pid29: 1100
+pid7: 1101
+pid22: 111
+pid19: 0000
+pid6: 0001
+pid5: 0010
+pid4: 0011
+pid28: 0100
+pid18: 0101
+pid20: 1011
+pid3: 1110
+pid27: 1111
+[32m[usertests] PASS forktree: exit=0[0m
+[usertests] RUN  hello_world
+Hello world from user mode program!
+[32m[usertests] PASS hello_world: exit=0[0m
+[usertests] RUN  huge_write
+1MiB written, time cost = 9511ms, write speed = 105KiB/s
+[32m[usertests] PASS huge_write: exit=0[0m
+[usertests] RUN  matrix
+pid 33 is running (1560 times)!.
+pid 33 done!.
+pid 34 is running (2250 times)!.
+pid 35 is running (2250 times)!.
+pid 35 done!.
+pid pid 37 is running (2960 times)!.
+pid 37 done!.
+pid 38pid 39 is running (3690 times)!.
+pid 40 is running (3690 times)!.
+pid 41 is running (3690 times)!.
+pid 42 is running (3690 times)!.
+pid 43 is running (4440 times)!.
+pid 44 is running (4440 times)!.
+pid 45 is running (4440 times)!.
+pid 46 is running (4440 times)!.
+pid 47 is running (4440 times)!.
+pid 48 is running (5210 times)!.
+pid 49 is running (6000 times)!.
+pid 50 is running (6000 times)!.
+fork ok.
+pid 34 done!.
+36 is running (2960 times)!.
+ is running (2960 times)!.
+pid 39 done!.
+pid 40 done!.
+pid 42 done!.
+pid 43 done!.
+pid 45 done!.
+pid 47 done!.
+pid pid 49 done!.
+pid 51 is running (6010 times)!.
+pid 52 is running (0 times)!.
+pid 52 done!.
+pid 53 is running (0 times)!.
+pid 53 done!.
+pid 54 is running (0 times)!.
+pid 54 done!.
+pid 55 is running (0 times)!.
+pid 55 done!.
+pid 56 is running (4010 times)!.
+pid 57 is running (4010 times)!.
+pid 58 is running (4010 times)!.
+pid 59 is running (4010 times)!.
+pid 60 is running (4010 times)!.
+pid 36 done!.
+pid pid 41 done!.
+pid 46 done!.
+48 done!.
+pid 50 done!.
+pid 57 done!.
+pid 58 done!.
+pid 61 is running (2240 times)!.
+pid 62 is running (8890 times)!.
+38 done!.
+pid 44 done!.
+pid 56 done!.
+pid 59pid 60 done!.
+pid 61 done!.
+pid 51 done!.
+ done!.
+pid 62 done!.
+matrix passed.
+[32m[usertests] PASS matrix: exit=0[0m
+[usertests] RUN  pipe_large_test
+sum = 476330(parent)
+sum = 476330(child)
+Child process exited!
+pipe_large_test passed!
+[32m[usertests] PASS pipe_large_test: exit=0[0m
+[usertests] RUN  pipetest
+Read OK, child process exited!
+pipetest passed!
+[32m[usertests] PASS pipetest: exit=0[0m
+[usertests] RUN  run_pipe_test
+sum = 151785(parent)
+sum = 151785(child)
+Child process exited!
+pipe_large_test passed!
+Iter 0 OK.
+sum = 413927(parent)
+sum = 413927(child)
+Child process exited!
+pipe_large_test passed!
+Iter 1 OK.
+sum = 664390(parent)
+sum = 664390(child)
+Child process exited!
+pipe_large_test passed!
+Iter 2 OK.
+sum = 129657(parent)
+sum = 129657(child)
+Child process exited!
+pipe_large_test passed!
+Iter 3 OK.
+sum = 356975(parent)
+sum = 356975(child)
+Child process exited!
+pipe_large_test passed!
+Iter 4 OK.
+[32m[usertests] PASS run_pipe_test: exit=0[0m
+[usertests] RUN  quota_test
+========== quota_test ==========
+[quota] open FD exhaustion + recovery
+[quota] open FD exhaustion + recovery passed
+[quota] dup FD exhaustion + recovery
+[quota] dup FD exhaustion + recovery passed
+[quota] pipe exhaustion + recovery
+[quota] pipe exhaustion + recovery passed
+[quota] pipe EMFILE + rollback
+[quota] pipe EMFILE + rollback passed
+[quota] dup(pipe_fd) accounting
+[quota] dup(pipe_fd) accounting passed
+[quota] fork inheritance + isolation
+[quota] fork inheritance + isolation passed
+[quota] concurrent create/close
+[quota] concurrent create/close passed
+quota_test passed!
+[32m[usertests] PASS quota_test: exit=0[0m
+[usertests] RUN  ipc_audit_integration_test
+ipc_audit_integration_test passed!
+[32m[usertests] PASS ipc_audit_integration_test: exit=0[0m
+[usertests] RUN  badptr
+badptr [PASS] NULL -> EFAULT
+badptr [PASS] Kernel Address -> EFAULT
+badptr [PASS] High Address -> EFAULT
+badptr [PASS] Length Overflow -> EFAULT
+badptr [PASS] Unmapped Page -> EFAULT
+badptr [PASS] Cross-page Missing -> EFAULT
+badptr [PASS] Read-only Output -> EFAULT
+badptr [PASS] Cross-page Read-only -> EFAULT
+badptr summary: 8/8 passed
+badptr kernel: alive
+[32m[usertests] PASS badptr: exit=0[0m
+[usertests] RUN  cred_test
+[kernel] Killed, SIGKILL=9
+[kernel] Killed, SIGKILL=9
+cred_test passed!
+[32m[usertests] PASS cred_test: exit=0[0m
+[usertests] RUN  sleep_simple
+into sleep test!
+current time_msec = 16264
+time_msec = 16365 after sleeping 100 ticks, delta = 101ms!
+r_sleep passed!
+[32m[usertests] PASS sleep_simple: exit=0[0m
+[usertests] RUN  sleep
+sleep 1 x 100 msecs.
+sleep 2 x 100 msecs.
+sleep 3 x 100 msecs.
+sleep 4 x 100 msecs.
+sleep 5 x 100 msecs.
+use 503 msecs.
+sleep pass.
+[32m[usertests] PASS sleep: exit=0[0m
+[usertests] RUN  sig_simple
+signal_simple: sigaction
+signal_simple: kill
+user_sig_test passed
+signal_simple: Done
+[32m[usertests] PASS sig_simple: exit=0[0m
+[usertests] RUN  sig_simple2
+signal_simple2: parent kill child
+signal_simple2: child sigaction
+signal_simple2: parent wait child
+user_sig_test passed
+signal_simple2: child done
+signal_simple2: parent Done
+[32m[usertests] PASS sig_simple2: exit=0[0m
+[usertests] RUN  sig_tests
+Testing user_sig_test_failsignum
+OK!
+Testing user_sig_test_kill
+func triggered
+OK!
+Testing user_sig_test_multiprocsignals
+func triggered
+OK!
+Testing user_sig_test_restore
+OK!
+Testing kernel_sig_test_ignore
+OK!
+Testing kernel_sig_test_stop_cont
+OK!
+Testing kernel_sig_test_failignorekill
+OK!
+Testing final_sig_test
+func triggered
+OK!
+ALL TESTS PASSED
+[32m[usertests] PASS sig_tests: exit=0[0m
+[usertests] RUN  yield
+[kernel] Killed, SIGKILL=9
+Hello, I am process 2.
+Back in process 2, iteration 0.
+Back in process 2, iteration 1.
+Back in process 2, iteration 2.
+Back in process 2, iteration 3.
+Back in process 2, iteration 4.
+yield pass.
+[32m[usertests] PASS yield: exit=0[0m
+[usertests] RUN  auditctl_test
+auditctl_test passed: stat, pagination, cursor, overflow, no feedback
+[32m[usertests] PASS auditctl_test: exit=0[0m
+[usertests] RUN  audit_test
+[audit_test][C01] PASS
+[audit_test][C02] PASS
+[audit_test][C03] PASS
+[audit_test][C04] PASS
+[audit_test][C05] PASS
+[audit_test][C06] PASS
+[audit_test][C07] PASS
+[audit_test][O02] PASS
+[audit_test][O03] PASS
+[audit_test][O04] PASS
+[audit_test][O05] PASS
+[audit_test][O06] PASS
+[audit_test][O07] PASS
+[audit_test][S01] PASS
+[audit_test][S02] PASS
+[audit_test][S03] PASS
+[audit_test][S06] PASS
+[audit_test][S07] PASS
+[audit_test] capacity=256 initial_total=1430 final_total=2593
+audit_test passed!
+[32m[usertests] PASS audit_test: exit=0[0m
+[usertests] RUN  audit_stress_test
+[audit_stress_test] PASS children=6 events_per_child=128 total=768 retained=256 overwritten_delta=768 elapsed_ms=17
+child exited in 44ms, exit_code = 0
+[32m[usertests] PASS audit_stress_test: exit=0[0m
+[usertests] expected-success suite result: 28/28 passed
+[usertests] Running expected-failure suite (4 tests)
+[usertests] RUN  stack_overflow
+It should trigger segmentation fault!
+depth = 0
+depth = 10
+depth = 20
+depth = 30
+depth = 40
+depth = 50
+depth = 60
+depth = 70
+depth = 80
+depth = 90
+depth = 100
+depth = 110
+depth = 120
+depth = 130
+depth = 140
+depth = 150
+depth = [K] task/call_user_signal_handler: default action: ignore it or kill process
+[kernel] Segmentation Fault, SIGSEGV=11
+[32m[usertests] PASS stack_overflow: exit=-11[0m
+[usertests] RUN  priv_csr
+Try to access privileged CSR in U Mode
+Kernel should kill this application!
+[K] task/call_user_signal_handler: default action: ignore it or kill process
+[kernel] Illegal Instruction, SIGILL=4
+[32m[usertests] PASS priv_csr: exit=-4[0m
+[usertests] RUN  priv_inst
+Try to execute privileged instruction in U Mode
+Kernel should kill this application!
+[K] task/call_user_signal_handler: default action: ignore it or kill process
+[kernel] Illegal Instruction, SIGILL=4
+[32m[usertests] PASS priv_inst: exit=-4[0m
+[usertests] RUN  store_fault
+Into Test store_fault, we will insert an invalid store operation...
+Kernel should kill this application!
+[K] task/call_user_signal_handler: default action: ignore it or kill process
+[kernel] Segmentation Fault, SIGSEGV=11
+[32m[usertests] PASS store_fault: exit=-11[0m
+[usertests] expected-failure suite result: 4/4 passed
+[32m[usertests] PASS all tests: 32/32
+Usertests passed![0m
+[kernel] Idle process exit with exit_code 0 ...
+
+Script done on 2026-09-15 18:42:23+08:00 [COMMAND_EXIT_CODE="0"]

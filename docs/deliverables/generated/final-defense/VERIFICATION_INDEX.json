@@ -1,0 +1,74 @@
+[
+  {
+    "image": "images/01-qemu-suite-summary-verbatim.png",
+    "image_sha256": "d8e59c99f8f043758d7e3677c0fcf4b7bb964811a274ddda11157451e32e9bff",
+    "source": "raw/qemu-summary-filter-20260915.typescript",
+    "source_sha256": "be3a5269ff4d15d3f2424fba2642a738bf2f96d782120127e823ab90f4471e19",
+    "start_marker": "[usertests] expected-success suite result",
+    "end_marker": "Usertests passed!",
+    "line_count": 7
+  },
+  {
+    "image": "images/02-qemu-badptr-verbatim.png",
+    "image_sha256": "9f22b5315a29a8c1eb35a24c54c23fcb312b38ae8f1f487774327cb5e466a92b",
+    "source": "raw/qemu-usertests-20260915.typescript",
+    "source_sha256": "8e8f8f61636b2dfaae5423593aa553b5a8a202a7481af1c55a584bb4d401d37c",
+    "start_marker": "[usertests] RUN  badptr",
+    "end_marker": "[usertests] PASS badptr: exit=0",
+    "line_count": 12
+  },
+  {
+    "image": "images/03-qemu-quota-verbatim.png",
+    "image_sha256": "bab4a96d3b823ce2c0b0ca68a43874c20c6b9cc4f38081381ec06b38cb96eb11",
+    "source": "raw/qemu-usertests-20260915.typescript",
+    "source_sha256": "8e8f8f61636b2dfaae5423593aa553b5a8a202a7481af1c55a584bb4d401d37c",
+    "start_marker": "[usertests] RUN  quota_test",
+    "end_marker": "[usertests] PASS quota_test: exit=0",
+    "line_count": 18
+  },
+  {
+    "image": "images/04-qemu-audit-stress-verbatim.png",
+    "image_sha256": "2ecd5f4d46a7c50fed2aff5aa2fe4b16ada43c16df49301da968e391555d52bb",
+    "source": "raw/qemu-usertests-20260915.typescript",
+    "source_sha256": "8e8f8f61636b2dfaae5423593aa553b5a8a202a7481af1c55a584bb4d401d37c",
+    "start_marker": "[usertests] RUN  audit_stress_test",
+    "end_marker": "[usertests] PASS audit_stress_test: exit=0",
+    "line_count": 4
+  },
+  {
+    "image": "images/05-host-audit-lib-verbatim.png",
+    "image_sha256": "13dc19aa323b7f755f3c948d148a0e04e84ee170d6703ba759a75047efff1973",
+    "source": "raw/host-audit-20260915.typescript",
+    "source_sha256": "8b75bc7d6199be8edf34add3cf8443a174a64d3cd642b44cb02bd13d01d02c4d",
+    "start_marker": "running 7 tests",
+    "end_marker": "test result: ok. 7 passed",
+    "line_count": 10
+  },
+  {
+    "image": "images/06-host-auditctl-verbatim.png",
+    "image_sha256": "fae46b36f6e5e962a6a78f262575325b20d2ba0d61e8e6a86d54a05a37047d5c",
+    "source": "raw/host-audit-20260915.typescript",
+    "source_sha256": "8b75bc7d6199be8edf34add3cf8443a174a64d3cd642b44cb02bd13d01d02c4d",
+    "start_marker": "running 12 tests",
+    "end_marker": "test result: ok. 12 passed",
+    "line_count": 15
+  },
+  {
+    "image": "images/07-host-syscalls-verbatim.png",
+    "image_sha256": "df36a841b1e297248431c068756aa3591037eb66cd512ef62d1284da0ff8b15f",
+    "source": "raw/host-audit-20260915.typescript",
+    "source_sha256": "8b75bc7d6199be8edf34add3cf8443a174a64d3cd642b44cb02bd13d01d02c4d",
+    "start_marker": "running 9 tests",
+    "end_marker": "test result: ok. 9 passed",
+    "line_count": 12
+  },
+  {
+    "image": "images/08-final-performance-log-verbatim.png",
+    "image_sha256": "4397c3ffdc3702ac9f30c774b0668f712be79197170f8bee4f831413abbc4f56",
+    "source": "docs/deliverables/logs/final-performance.log",
+    "source_sha256": "90f886d680f8f2df662008464d3cc70779de2f99fd2dfa2346ee64fb322d382d",
+    "start_marker": "rCore Secure IPC v1.0.0 - final IPC benchmark",
+    "end_marker": "Conclusion: measurable constant-factor overhead; no order-of-magnitude regression.",
+    "line_count": 18
+  }
+]

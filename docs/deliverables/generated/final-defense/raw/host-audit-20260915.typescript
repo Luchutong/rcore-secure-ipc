@@ -1,0 +1,56 @@
+Script started on 2026-09-15 18:42:33+08:00 [COMMAND="cargo test --manifest-path tests/audit-host/Cargo.toml -- --test-threads=1" TERM="dumb" TTY="/dev/pts/5" COLUMNS="80" LINES="24"]
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running unittests lib.rs (tests/audit-host/target/debug/deps/audit_host_tests-827daef243be6474)
+
+running 7 tests
+test abi_layout_matches_v1 ... ok
+test batch_conversion_marks_only_first_valid_record ... ok
+test conversion_preserves_metadata_and_initializes_abi_fields ... ok
+test errors_use_positive_errno_and_zero_result ... ok
+test operations_use_stable_ids_and_correct_success_amounts ... ok
+test recording_filters_feedback_and_keeps_ring_counters_consistent ... ok
+test stats_conversion_preserves_one_consistent_snapshot ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running auditctl.rs (tests/audit-host/target/debug/deps/auditctl-06fe545aefc5a516)
+
+running 12 tests
+test empty_tail_and_maximum_cursor_do_not_read ... ok
+test events_after_initial_tail_do_not_extend_command ... ok
+test failed_batch_discards_partial_copy_and_preserves_last_successful_cursor ... ok
+test gap_unknown_operation_flags_and_errno_are_displayed_without_panicking ... ok
+test help_and_invalid_arguments_never_call_the_kernel ... ok
+test incompatible_stats_and_inconsistent_counters_are_rejected ... ok
+test invalid_counts_and_records_cannot_panic_or_repeat_forever ... ok
+test paginates_more_than_32_records_and_keeps_reading_short_batches ... ok
+test reports_gap_even_if_all_initial_events_have_been_overwritten ... ok
+test stat_errors_report_errno_without_using_output ... ok
+test stat_prints_all_counters_and_sequence_bounds ... ok
+test zero_read_return_ends_iteration ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running syscalls.rs (tests/audit-host/target/debug/deps/syscalls-b4908fcb0f20a58d)
+
+running 9 tests
+test copy_failure_records_efault_and_preserves_cursor_for_retry ... ok
+test invalid_stat_parameters_record_once_without_copying ... ok
+test null_and_wrapping_output_ranges_fail_before_copying ... ok
+test overflow_reads_are_bounded_and_cursor_does_not_repeat ... ok
+test permission_precedes_parameters_and_zero_capacity ... ok
+test root_and_audit_capability_can_read_without_feedback ... ok
+test snapshot_excludes_events_appended_during_copy ... ok
+test stat_copies_only_eighty_bytes_and_preserves_tail ... ok
+test zero_capacity_and_empty_tail_do_not_access_output ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests audit_host_tests
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+Script done on 2026-09-15 18:42:33+08:00 [COMMAND_EXIT_CODE="0"]

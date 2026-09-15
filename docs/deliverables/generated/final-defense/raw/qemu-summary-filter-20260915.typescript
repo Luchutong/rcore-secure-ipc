@@ -1,0 +1,7 @@
+Script started on 2026-09-15 18:44:37+08:00 [COMMAND="grep -E '\[usertests\] expected-success suite result|\[usertests\] expected-failure suite result|\[usertests\] PASS all tests|Usertests passed' docs/deliverables/generated/final-defense/raw/qemu-usertests-20260915.typescript" TERM="dumb" TTY="/dev/pts/5" COLUMNS="80" LINES="24"]
+[usertests] expected-success suite result: 28/28 passed
+[usertests] expected-failure suite result: 4/4 passed
+[32m[usertests] PASS all tests: 32/32
+Usertests passed![0m
+
+Script done on 2026-09-15 18:44:37+08:00 [COMMAND_EXIT_CODE="0"]
