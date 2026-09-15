@@ -25,12 +25,31 @@ WIDTH = 1600
 HEIGHT = 900
 MARGIN_X = 65
 MARGIN_Y = 60
-BACKGROUND = "#FFFFFF"
-TEXT = "#16263A"
-BLUE = "#005BAC"
-RULE = "#005BAC"
+# A dark terminal palette.  ANSI colours from the captured PTY are preserved
+# when they are present; otherwise the terminal's normal foreground is used.
+BACKGROUND = "#0C0C0C"
+TEXT = "#CCCCCC"
+ANSI_FOREGROUND = {
+    30: "#0C0C0C",
+    31: "#CD3131",
+    32: "#0DBC79",
+    33: "#E5E510",
+    34: "#2472C8",
+    35: "#BC3FBC",
+    36: "#11A8CD",
+    37: "#E5E5E5",
+    90: "#666666",
+    91: "#F14C4C",
+    92: "#23D18B",
+    93: "#F5F543",
+    94: "#3B8EEA",
+    95: "#D670D6",
+    96: "#29B8DB",
+    97: "#E5E5E5",
+}
 
 ANSI_CSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+ANSI_SGR = re.compile(r"\x1b\[([0-9;]*)m")
 
 SPECS = [
     {
@@ -96,10 +115,12 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def source_lines(path: Path) -> list[str]:
+    return path.read_text(encoding="utf-8", errors="replace").replace("\r", "").splitlines()
+
+
 def clean_lines(path: Path) -> list[str]:
-    text = path.read_text(encoding="utf-8", errors="replace")
-    text = ANSI_CSI.sub("", text).replace("\r", "")
-    return text.splitlines()
+    return [ANSI_CSI.sub("", line) for line in source_lines(path)]
 
 
 def find_block(lines: list[str], start: str, end: str) -> list[str]:
@@ -108,21 +129,49 @@ def find_block(lines: list[str], start: str, end: str) -> list[str]:
     return lines[begin : finish + 1]
 
 
-def wrap_verbatim(draw: ImageDraw.ImageDraw, line: str, font: ImageFont.FreeTypeFont) -> list[str]:
-    """Wrap at character boundaries; every source character remains present."""
+def styled_segments(line: str) -> list[tuple[str, str]]:
+    """Decode only ANSI SGR colours that really occur in the captured line."""
+    foreground = TEXT
+    cursor = 0
+    segments: list[tuple[str, str]] = []
+    for match in ANSI_SGR.finditer(line):
+        if cursor < match.start():
+            segments.append((line[cursor : match.start()], foreground))
+        for value in filter(None, match.group(1).split(";")):
+            code = int(value)
+            if code == 0 or code == 39:
+                foreground = TEXT
+            elif code in ANSI_FOREGROUND:
+                foreground = ANSI_FOREGROUND[code]
+        cursor = match.end()
+    if cursor < len(line):
+        segments.append((line[cursor:], foreground))
+    return segments or [("", foreground)]
+
+
+def wrap_verbatim(
+    draw: ImageDraw.ImageDraw, segments: list[tuple[str, str]], font: ImageFont.FreeTypeFont
+) -> list[list[tuple[str, str]]]:
+    """Wrap at character boundaries; every non-control source character remains."""
     limit = WIDTH - 2 * MARGIN_X
-    if not line:
-        return [""]
-    chunks: list[str] = []
-    current = ""
-    for char in line:
-        if current and draw.textlength(current + char, font=font) > limit:
-            chunks.append(current)
-            current = char
-        else:
-            current += char
-    chunks.append(current)
-    return chunks
+    chunks: list[list[tuple[str, str]]] = []
+    current: list[tuple[str, str]] = []
+    current_width = 0.0
+    for text, color in segments:
+        for char in text:
+            char_width = draw.textlength(char, font=font)
+            if current and current_width + char_width > limit:
+                chunks.append(current)
+                current = []
+                current_width = 0.0
+            if current and current[-1][1] == color:
+                current[-1] = (current[-1][0] + char, color)
+            else:
+                current.append((char, color))
+            current_width += char_width
+    if current:
+        chunks.append(current)
+    return chunks or [[("", TEXT)]]
 
 
 def render(lines: list[str], output: Path, font_size: int) -> None:
@@ -132,21 +181,18 @@ def render(lines: list[str], output: Path, font_size: int) -> None:
         font = ImageFont.truetype(MONO, size)
         line_height = size + 12
         max_lines = (HEIGHT - 2 * MARGIN_Y - 10) // line_height
-        visual_lines = [
-            (chunk, line.startswith("[usertests]"))
-            for line in lines
-            for chunk in wrap_verbatim(draw, line, font)
-        ]
+        visual_lines = [chunk for line in lines for chunk in wrap_verbatim(draw, styled_segments(line), font)]
         if len(visual_lines) <= max_lines:
             break
     else:
         raise ValueError(f"{output.name}: transcript block does not fit 16:9 canvas")
 
-    draw.rectangle((0, 0, WIDTH, 12), fill=RULE)
     y = MARGIN_Y
-    for line, is_usertest in visual_lines:
-        color = BLUE if is_usertest else TEXT
-        draw.text((MARGIN_X, y), line, font=font, fill=color)
+    for line in visual_lines:
+        x = MARGIN_X
+        for text, color in line:
+            draw.text((x, y), text, font=font, fill=color)
+            x += draw.textlength(text, font=font)
         y += line_height
     image.save(output, format="PNG", optimize=True)
 
@@ -156,7 +202,11 @@ def main() -> None:
     records = []
     for spec in SPECS:
         source = spec["source"]
-        lines = find_block(clean_lines(source), spec["start"], spec["end"])
+        raw_lines = source_lines(source)
+        clean = [ANSI_CSI.sub("", line) for line in raw_lines]
+        begin = next(i for i, line in enumerate(clean) if spec["start"] in line)
+        finish = next(i for i, line in enumerate(clean[begin:], begin) if spec["end"] in line)
+        lines = raw_lines[begin : finish + 1]
         output = IMAGES / spec["image"]
         render(lines, output, spec["font_size"])
         records.append(

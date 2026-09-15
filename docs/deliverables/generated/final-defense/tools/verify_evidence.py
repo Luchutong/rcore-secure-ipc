@@ -59,7 +59,11 @@ def main() -> None:
             require(png_size(image) == (1600, 900), f"image is 1600x900: {relative_image}")
             require(sha256(image) == record["image_sha256"], f"image hash matches index: {relative_image}")
 
-            lines = renderer.find_block(renderer.clean_lines(source), item["start"], item["end"])
+            raw_lines = renderer.source_lines(source)
+            clean = [renderer.ANSI_CSI.sub("", line) for line in raw_lines]
+            begin = next(i for i, line in enumerate(clean) if item["start"] in line)
+            finish = next(i for i, line in enumerate(clean[begin:], begin) if item["end"] in line)
+            lines = raw_lines[begin : finish + 1]
             regenerated = temporary_dir / item["image"]
             renderer.render(lines, regenerated, item["font_size"])
             require(sha256(regenerated) == sha256(image), f"image regenerates exactly: {relative_image}")

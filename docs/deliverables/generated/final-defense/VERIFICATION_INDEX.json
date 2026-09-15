@@ -1,7 +1,7 @@
 [
   {
     "image": "images/01-qemu-suite-summary-verbatim.png",
-    "image_sha256": "d8e59c99f8f043758d7e3677c0fcf4b7bb964811a274ddda11157451e32e9bff",
+    "image_sha256": "351e6721282e5ceb13296a811edde50feb2e7004bb040a2d7c6e3c3a5d6d79b6",
     "source": "raw/qemu-summary-filter-20260915.typescript",
     "source_sha256": "be3a5269ff4d15d3f2424fba2642a738bf2f96d782120127e823ab90f4471e19",
     "start_marker": "[usertests] expected-success suite result",
@@ -10,7 +10,7 @@
   },
   {
     "image": "images/02-qemu-badptr-verbatim.png",
-    "image_sha256": "9f22b5315a29a8c1eb35a24c54c23fcb312b38ae8f1f487774327cb5e466a92b",
+    "image_sha256": "93e56c3582c6ba5ffdbc57ce0e5dc3994f09338e036e37ea40bf9d3138e7456c",
     "source": "raw/qemu-usertests-20260915.typescript",
     "source_sha256": "8e8f8f61636b2dfaae5423593aa553b5a8a202a7481af1c55a584bb4d401d37c",
     "start_marker": "[usertests] RUN  badptr",
@@ -19,7 +19,7 @@
   },
   {
     "image": "images/03-qemu-quota-verbatim.png",
-    "image_sha256": "bab4a96d3b823ce2c0b0ca68a43874c20c6b9cc4f38081381ec06b38cb96eb11",
+    "image_sha256": "ba80c25dc0027c5c6a48c999d5c9328b2cc5c3c03f5bd3e0f8f445b0642c01ea",
     "source": "raw/qemu-usertests-20260915.typescript",
     "source_sha256": "8e8f8f61636b2dfaae5423593aa553b5a8a202a7481af1c55a584bb4d401d37c",
     "start_marker": "[usertests] RUN  quota_test",
@@ -28,7 +28,7 @@
   },
   {
     "image": "images/04-qemu-audit-stress-verbatim.png",
-    "image_sha256": "2ecd5f4d46a7c50fed2aff5aa2fe4b16ada43c16df49301da968e391555d52bb",
+    "image_sha256": "349e61c7ab0c39c29df1606094c73c56e5be202b5cc381bb0a22ca4e2dddb484",
     "source": "raw/qemu-usertests-20260915.typescript",
     "source_sha256": "8e8f8f61636b2dfaae5423593aa553b5a8a202a7481af1c55a584bb4d401d37c",
     "start_marker": "[usertests] RUN  audit_stress_test",
@@ -37,7 +37,7 @@
   },
   {
     "image": "images/05-host-audit-lib-verbatim.png",
-    "image_sha256": "13dc19aa323b7f755f3c948d148a0e04e84ee170d6703ba759a75047efff1973",
+    "image_sha256": "630cd0255a32fb5eff7ba3524e249659f91bab5880aa814a134fc4c033ad0e70",
     "source": "raw/host-audit-20260915.typescript",
     "source_sha256": "8b75bc7d6199be8edf34add3cf8443a174a64d3cd642b44cb02bd13d01d02c4d",
     "start_marker": "running 7 tests",
@@ -46,7 +46,7 @@
   },
   {
     "image": "images/06-host-auditctl-verbatim.png",
-    "image_sha256": "fae46b36f6e5e962a6a78f262575325b20d2ba0d61e8e6a86d54a05a37047d5c",
+    "image_sha256": "b8dd4cdf54ea75752a9a3a69b48c81ae7a4df58ad89f233188ff6ddef88781f4",
     "source": "raw/host-audit-20260915.typescript",
     "source_sha256": "8b75bc7d6199be8edf34add3cf8443a174a64d3cd642b44cb02bd13d01d02c4d",
     "start_marker": "running 12 tests",
@@ -55,7 +55,7 @@
   },
   {
     "image": "images/07-host-syscalls-verbatim.png",
-    "image_sha256": "df36a841b1e297248431c068756aa3591037eb66cd512ef62d1284da0ff8b15f",
+    "image_sha256": "d0dcfa49086de959d06a4bfc80037aab457466310e3b093dec7bf316e896d216",
     "source": "raw/host-audit-20260915.typescript",
     "source_sha256": "8b75bc7d6199be8edf34add3cf8443a174a64d3cd642b44cb02bd13d01d02c4d",
     "start_marker": "running 9 tests",
@@ -64,7 +64,7 @@
   },
   {
     "image": "images/08-final-performance-log-verbatim.png",
-    "image_sha256": "4397c3ffdc3702ac9f30c774b0668f712be79197170f8bee4f831413abbc4f56",
+    "image_sha256": "2fd959370b2ec3f6720a578001599ff48fbb2dc037459cc6b7cdd5086dc2c223",
     "source": "docs/deliverables/logs/final-performance.log",
     "source_sha256": "90f886d680f8f2df662008464d3cc70779de2f99fd2dfa2346ee64fb322d382d",
     "start_marker": "rCore Secure IPC v1.0.0 - final IPC benchmark",

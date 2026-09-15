@@ -4,7 +4,8 @@
 制作的终端截图，也不是由 Markdown 结果重新绘制的示意图**：它们由
 [`tools/render_verbatim.py`](tools/render_verbatim.py) 从本目录保存的真实 PTY 运行记录，或
 仓库既存的最终性能原始日志中，截取连续文本后逐字渲染而成。这样既保留可读的 16:9
-白底/北洋蓝版式，也能由原文、命令和 SHA-256 完整复核。
+终端深色版式，也能由原文、命令和 SHA-256 完整复核。若 PTY 原文带有 ANSI 颜色（例如绿色
+PASS），渲染时会保留该颜色；没有 ANSI 颜色的文字保持终端默认前景色。
 
 渲染程序不保存任何测试结果字符串；每张图的开始和结束标记、输入文件哈希及 PNG 哈希均在
 [`VERIFICATION_INDEX.json`](VERIFICATION_INDEX.json) 中记录。图片不带伪造的终端窗口边框或
