@@ -10,10 +10,9 @@ extern crate user_lib;
 use core::arch::asm;
 
 const EFAULT: isize = 14;
-const SYSCALL_OPEN: usize = 56;
-const SYSCALL_PIPE: usize = 59;
 const SYSCALL_READ: usize = 63;
 const SYSCALL_WRITE: usize = 64;
+const PAGE_SIZE: usize = 4096;
 
 fn raw_syscall(id: usize, args: [usize; 3]) -> isize {
     let mut result: isize;
@@ -31,7 +30,7 @@ fn raw_syscall(id: usize, args: [usize; 3]) -> isize {
 
 fn check(name: &str, result: isize) -> bool {
     if result == -EFAULT {
-        println!("badptr [PASS] {} rejected with EFAULT", name);
+        println!("badptr [PASS] {} -> EFAULT", name);
         true
     } else {
         println!(
@@ -42,38 +41,64 @@ fn check(name: &str, result: isize) -> bool {
     }
 }
 
+fn stack_pointer() -> usize {
+    let value: usize;
+    unsafe {
+        asm!("mv {}, sp", out(reg) value);
+    }
+    value
+}
+
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     let local = [0u8; 8];
+    // The linker loads user programs at 0x10000, so 0x4000 is a non-null,
+    // unmapped user address. The two-page user stack ends at the first page
+    // boundary above the current SP; crossing that boundary reaches an
+    // unmapped page. Code pages are readable/executable but never writable.
+    let unmapped_page = 0x4000usize;
+    let stack_top = (stack_pointer() + PAGE_SIZE - 1) & !(PAGE_SIZE - 1);
+    let cross_page_missing = stack_top - 8;
+    let read_only_output = main as *const () as usize;
+    let read_only_page_end = (read_only_output & !(PAGE_SIZE - 1)) + PAGE_SIZE;
+    let cross_page_read_only = read_only_page_end - 8;
     let results = [
-        check("write null", raw_syscall(SYSCALL_WRITE, [1, 0, 16])),
+        check("NULL", raw_syscall(SYSCALL_WRITE, [1, 0, 16])),
         check(
-            "write kernel-addr",
+            "Kernel Address",
             raw_syscall(SYSCALL_WRITE, [1, 0x8020_0000, 16]),
         ),
         check(
-            "write high-addr",
+            "High Address",
             raw_syscall(SYSCALL_WRITE, [1, 0xffff_ffff_ffff_f000, 16]),
         ),
         check(
-            "write overflow-len",
+            "Length Overflow",
             raw_syscall(SYSCALL_WRITE, [1, local.as_ptr() as usize, usize::MAX]),
         ),
         check(
-            "open kernel-addr",
-            raw_syscall(SYSCALL_OPEN, [0x8020_0000, 0, 0]),
-        ),
-        check("open null", raw_syscall(SYSCALL_OPEN, [0, 0, 0])),
-        check(
-            "pipe kernel-addr",
-            raw_syscall(SYSCALL_PIPE, [0x8020_0000, 0, 0]),
+            "Unmapped Page",
+            raw_syscall(SYSCALL_WRITE, [1, unmapped_page, 16]),
         ),
         check(
-            "read kernel-addr",
-            raw_syscall(SYSCALL_READ, [0, 0x8020_0000, 16]),
+            "Cross-page Missing",
+            raw_syscall(SYSCALL_WRITE, [1, cross_page_missing, 16]),
+        ),
+        check(
+            "Read-only Output",
+            raw_syscall(SYSCALL_READ, [0, read_only_output, 1]),
+        ),
+        check(
+            "Cross-page Read-only",
+            raw_syscall(SYSCALL_READ, [0, cross_page_read_only, 16]),
         ),
     ];
     let passed = results.iter().filter(|ok| **ok).count();
     println!("badptr summary: {}/{} passed", passed, results.len());
-    if passed == results.len() { 0 } else { 1 }
+    if passed == results.len() {
+        println!("badptr kernel: alive");
+        0
+    } else {
+        1
+    }
 }

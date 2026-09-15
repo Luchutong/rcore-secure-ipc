@@ -105,16 +105,17 @@ auditctl stat
 
 | 编号 | 操作 | 非法输入 | 预期 |
 | --- | --- | --- | --- |
-| B01 | write | null | `-EFAULT` |
+| B01 | write | NULL | `-EFAULT` |
 | B02 | write | 内核地址 `0x80200000` | `-EFAULT` |
-| B03 | write | 高地址 | `-EFAULT` |
-| B04 | write | `ptr+len` 回绕 | `-EFAULT` |
-| B05 | open | 内核地址字符串 | `-EFAULT` |
-| B06 | open | null | `-EFAULT` |
-| B07 | pipe | 内核地址输出数组 | `-EFAULT` |
-| B08 | read | 内核地址输出缓冲区 | `-EFAULT` |
+| B03 | write | 高地址 `0xfffffffffffff000` | `-EFAULT` |
+| B04 | write | `ptr+len` 整数回绕 | `-EFAULT` |
+| B05 | write | 非零未映射页 | `-EFAULT` |
+| B06 | write | 从有效栈页跨入未映射页 | `-EFAULT` |
+| B07 | read | 输出地址位于只读代码页 | `-EFAULT` |
+| B08 | read | 输出范围跨越只读页边界 | `-EFAULT` |
 
-关键判据不是“程序没有 panic”，而是每项都精确返回 `-14`，测试继续运行并打印 8/8。
+关键判据不是“程序没有 panic”，而是每项都精确返回 `-14`，测试继续运行并打印 8/8；随后再运行
+`hello_world`，证明攻击测试结束后内核仍能调度新的用户程序。
 
 ### 4.3 `quota_test`：资源耗尽与恢复
 

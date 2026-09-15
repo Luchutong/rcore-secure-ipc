@@ -42,7 +42,7 @@
 | 编号 | 命令/页面 | 必须可见内容 | 负责人 |
 | --- | --- | --- | --- |
 | S01 | `make run TEST=1` | 28/28、4/4、32/32、Usertests passed | D |
-| S02 | `badptr` | 八行 PASS 与 8/8 | B |
+| S02 | `badptr`，随后运行 `hello_world` | 八行 EFAULT、8/8、kernel alive，以及后续程序成功输出 | B |
 | S03 | `quota_test` | 七类 passed 与总结 | C |
 | S04 | `cred_test` | 两次 SIGKILL 和 `cred_test passed!` | A |
 | S05 | `auditctl stat` + `read` | capacity、序号、操作、status | D |
@@ -51,6 +51,12 @@
 | S08 | GitHub Actions 最终 run | 三个 job 为绿色成功，commit 对应最终 main | D |
 
 报告正文通常选择 S01、S02、S05、S07 四张即可；其余放附录或答辩备用页。
+
+模块 B 已提供两张可直接插入的 16:9 图片：
+
+- `figures/module-b-badptr-summary.png`：第 7 页主图，左侧八类输入，右侧 8/8、EFAULT、Alive。
+- `figures/module-b-badptr-qemu-evidence.png`：原始测试证据页，包含逐项输出及攻击后运行
+  `hello_world` 的存活证明。
 
 ## 4. 日志采集命令
 

@@ -173,7 +173,11 @@ EPERM。普通进程的 setuid 只允许降权，避免先降权后再自行恢�
 
 **主讲：B｜45 秒**
 
-整页使用 [fig-02-security-matrix.png](figures/fig-02-security-matrix.png)，右下角突出 `8/8 PASS`。
+页面标题固定为“八类坏指针均被安全拦截，内核继续运行”。主体使用
+[module-b-badptr-summary.png](figures/module-b-badptr-summary.png)：左侧列八类输入，右侧只保留
+`8/8 PASS`、`Return: EFAULT` 和 `Kernel: Alive`。真实运行证据使用
+[module-b-badptr-qemu-evidence.png](figures/module-b-badptr-qemu-evidence.png)，可放在下一页或答辩备用页；
+完整输出见 [module-b-badptr-test-20260915.log](logs/module-b-badptr-test-20260915.log)。
 
 **备注讲稿：**
 
