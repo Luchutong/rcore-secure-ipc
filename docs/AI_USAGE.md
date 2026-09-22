@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: 'e7216a48-ea08-4be2-bc63-3601c2056b91'
-  PropagateID: 'e7216a48-ea08-4be2-bc63-3601c2056b91'
-  ReservedCode1: '45b64d68-74fa-4a20-ad6e-6976a003bc93'
-  ReservedCode2: '45b64d68-74fa-4a20-ad6e-6976a003bc93'
+  ProduceID: 'eb79ab9c-c60d-4d46-980f-909c27bd6c6d'
+  PropagateID: 'eb79ab9c-c60d-4d46-980f-909c27bd6c6d'
+  ReservedCode1: 'd954aa1f-54f8-4087-a711-36f298e3bdec'
+  ReservedCode2: 'd954aa1f-54f8-4087-a711-36f298e3bdec'
 ---
 
 # AI 工具使用记录
@@ -52,7 +52,7 @@ Clippy检查通过。未新增独立主机生命周期测试，A/B/C联合验收
 预期，并新增成功创建、`ENOSPC`、统计增量、失败回滚和关闭恢复测试。自动验证：D 独立分支
 28项宿主测试及27/27项QEMU测试通过，PR #1 GitHub Actions通过；C+D预览分支28项宿主测试
 及29/29项QEMU测试通过。人工仍需审阅代码和测试结论；A/B联合测试、C的管道读写审计与
-性能对比尚未完成。详细证据见 [角色 D 进度与验证记录](D_VERIFICATION.md)。
+性能对比尚未完成。
 
 2026-09-09，开发者 D 使用 OpenAI Codex 增加手工 IPC 性能基准，并在原始 `main`、D 未接线
 对照组与 C+D 安全路径上各运行5次、每次20,000轮管道创建/关闭。三组中位数分别为647、
@@ -77,7 +77,8 @@ Clippy检查通过。未新增独立主机生命周期测试，A/B/C联合验收
 共30/30通过，配额和审计统计未受影响。D分支push与PR流水线及C+D预览流水线的文档、
 QEMU作业均通过；成员人工复核仍待完成，A/B/C正式集成后的联合压力场景不在本次结论内。
 
-|2026‑09‑10|	|开发者 B|	|deepseek|	|用户指针内存安全模块开发|	|修复以下问题：未映射地址 panic（DoS）、无 `\0` 字符串导致的无限循环、`ptr+len` 溢出回绕、不检查 `U` 标志可触达内核页、不检查 R/W 权限可写只读段、跨页结构体读到物理不连续数据、argv 数组无终止符无限遍历、非法 open flags panic—— 共 8 类。|	已采用	|完成编译，通过基础测试；等待项目组复核
+|2026‑09‑10|	|开发者 B|	|deepseek|	|用户指针内存安全模块开发|	|修复以下问题：未映射地址 panic（DoS）、无 `\0` 字符串导致的无限循环、`ptr+len` 溢出回绕、不检查 `U` 标志可触达宿主页、不检查 R/W 权限可写只读段、跨页结构体读到物理不连续数据、argv 数组无终止符无限遍历、非法 open flags panic—— 共 8 类。|	已采用	|已完成编译，通过基础测试；等待项目组复核
+| 2026-09-06 | 开发者 C | OpenAI Codex | IPC 配额资源治理实现 | 设计并实现 per-process IPC 配额模型（fd 与管道配额）、配额预留与回滚、per-process 配额接入 IPC 门面（preflight/complete）、fd/管道配额生命周期钩子与原子预留，覆盖配额耗尽与恢复 | 已采用 | 编译通过，配额耗尽与恢复测试通过；等待 integration 集成复核 |
 | 2026-09-03 | 于泽通 | TeleAgent (星辰超级智能体) | 角色A：进程凭据与授权策略实现 | 实现 `Credentials` 结构与 UID 分配器、`authorize_signal` 五级权限检查、重写 `sys_kill` 走 IPC 授权链路、新增 `sys_getuid`/`sys_setuid` 系统调用、编写用户态测试程序 `cred_test.rs` | 已采用 | 内核+用户程序编译通过，QEMU 运行 5/5 测试 PASS，exec 不改 UID 行为确认 |
 | 2026-09-13 | 项目组 | OpenAI Codex | A/B/C/D 四模块集成 | 按 B→A→C→D 依赖完成正式祖先合并，统一用户复制、凭据授权、配额回滚和审计路径；补充坏指针、跨 UID 信号、管道读写与跨页 ABI 输出测试 | 已采用，待成员审查 | 本地宿主测试 28/28、QEMU 32/32 通过；远程预览分支 CI 通过，待 integration PR 审查 |
 | 2026-09-14 | 项目组 | OpenAI Codex | 稳定版合并与项目收尾 | 创建并合并 `integration` 到 `main` 的最终 PR，核对合并后 CI，执行最终性能复测，并整理 README、路线图和最终验收记录 | 已采用 | 最终 PR 与 `main` 合并后 CI 均成功；宿主测试 28/28、QEMU 32/32 通过；文档发布成功；性能复测五次中位数 746 ms，原始数据已归档，仍需项目成员最终审阅 |

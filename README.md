@@ -1,3 +1,14 @@
+---
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: '33155090-b322-4666-8cab-c9de61a87e89'
+  PropagateID: '33155090-b322-4666-8cab-c9de61a87e89'
+  ReservedCode1: '00088b2c-4d6a-48dc-a52a-e69179d8d3db'
+  ReservedCode2: '00088b2c-4d6a-48dc-a52a-e69179d8d3db'
+---
+
 # rCore Secure IPC
 
 基于 Rust 与 RISC-V 的教学操作系统 IPC 安全扩展实践项目。
@@ -20,12 +31,13 @@
 
 - [最终验收与发布记录](docs/FINAL_ACCEPTANCE.md)
 - [四人协作开发计划](docs/ROADMAP.md)
-- [团队分工与开发规范](docs/TEAM_COLLABORATION.md)
+- [中期情况说明](docs/MIDTERM_STATUS.md)
 - [IPC Security API v1](docs/IPC_SECURITY_API.md)
 - [IPC 安全审计 ABI v1](docs/AUDIT_ABI_V1.md)
 - [auditctl 工具设计与使用](docs/AUDITCTL.md)
 - [多进程审计压力测试](docs/AUDIT_STRESS_TEST.md)
 - [模块独立性审计](docs/MODULE_INDEPENDENCE.md)
+- [IPC 安全路径性能初测](docs/PERFORMANCE.md)
 - [贡献与合并规范](CONTRIBUTING.md)
 - [AI 工具使用记录](docs/AI_USAGE.md)
 
@@ -52,3 +64,5 @@ git fetch upstream
 ```
 
 上游历史不会合并进本项目的 `main` 提交历史；需要同步时应以明确的代码变更提交记录引入。
+
+> AI生成

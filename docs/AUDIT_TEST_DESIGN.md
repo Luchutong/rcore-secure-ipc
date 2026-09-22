@@ -1,3 +1,14 @@
+---
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: '4905513e-3877-4f72-a8e1-3ab990f57e38'
+  PropagateID: '4905513e-3877-4f72-a8e1-3ab990f57e38'
+  ReservedCode1: '6c997242-64ae-4d12-acfe-30dabe36a2a6'
+  ReservedCode2: '6c997242-64ae-4d12-acfe-30dabe36a2a6'
+---
+
 # 游标、覆盖与统计测试设计
 
 状态：设计完成；[audit_test.rs](../user/src/bin/audit_test.rs) 已实现18个用户态场景，
@@ -5,7 +16,6 @@
 第5～8节保留设计依据和用例说明；实际验证结果见第11节。
 
 设计日期：2026-09-05。核对代码基线：`a11200b`（`feature/audit-testing`）。
-对应任务：[角色 D 任务清单，第八节](ROLE_D_TASKS.md#八独立审计测试)。
 契约来源：[审计 ABI v1](AUDIT_ABI_V1.md)；内部行为参考 [审计设计](AUDIT_DESIGN.md)。
 
 ## 1. 测试要证明什么
@@ -356,3 +366,5 @@ O07验证的是单线程安排的读写交错，不代表多核并发安全；UP
 本地日志保存在 `user/target/audit-test-logs/`：`build.log`、`repeated-qemu.log`、
 `expected-failure.log`、`regression.log` 和 `environment.log`。该目录是被Git忽略的构建产物，
 执行cargo clean可能移除，提交材料时应另行归档所需结果。远端GitHub Actions未由本次操作触发。
+
+> AI生成
