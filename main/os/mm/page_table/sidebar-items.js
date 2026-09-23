@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_ARGV","MAX_STR_LEN","USER_VA_LIMIT"],"fn":["check_user_range","try_translated_byte_buffer","try_translated_ref","try_translated_refmut","try_translated_str"],"struct":["PTEFlags","PageTable","PageTableEntry","UserBuffer","UserBufferIterator"]};

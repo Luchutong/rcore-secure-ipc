@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["complete","preflight","record_failure","register_pipe_fd","release_fd","reserve_dup_fd","reserve_file_fd","unregister_pipe_fd"],"mod":["api","audit","credentials","policy","quota"],"struct":["IpcPermit","ProcessSecurityState"]};
